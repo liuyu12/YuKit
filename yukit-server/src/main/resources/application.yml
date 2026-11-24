@@ -122,8 +122,9 @@ sa-token:
   is-share: false
   # token 风格
   token-style: uuid
-  # Redis key 统一前缀，多项目共用 Redis 时隔离命名空间
-  key-prefix: "yukit:satoken:"
+  # Redis key 统一前缀（由 KeyPrefixSaTokenDao 覆写 wrapKey 实现），多项目共用 Redis 时隔离命名空间；
+  # 原生 key 首段已是 satoken:，此处只加项目段，最终形如 yukit:satoken:login:token:xxx
+  key-prefix: "yukit:"
   # 会话存储已从内存切换到 Redis（sa-token-redis-template 自动装配 SaTokenDao），
   # 重启不掉线、支持集群部署；未引入该插件时默认存进程内存
   # Alone 独立 Redis：会话数据连到独立库，与业务缓存分库（结构同 spring.data.redis，需注册 SaAloneRedisInject 生效）
