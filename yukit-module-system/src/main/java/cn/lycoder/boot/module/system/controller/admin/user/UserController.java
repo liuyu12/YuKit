@@ -1,5 +1,7 @@
 package cn.lycoder.boot.module.system.controller.admin.user;
 
+import cn.lycoder.boot.framework.common.operatelog.OperationLog;
+import cn.lycoder.boot.framework.common.operatelog.OperationType;
 import cn.lycoder.boot.framework.common.pojo.PageResult;
 import cn.lycoder.boot.framework.common.pojo.Result;
 import cn.lycoder.boot.module.system.controller.admin.user.vo.UserCreateReqVO;
@@ -73,6 +75,18 @@ public class UserController {
     @SaCheckPermission("system:user:delete")
     public Result<Boolean> deleteUser(@Parameter(description = "用户ID") @PathVariable("userId") Long userId) {
         userService.deleteUser(userId);
+        return Result.success(true);
+    }
+
+    /**
+     * 解锁用户登录（清除连续失败计数，解除锁定）
+     */
+    @Operation(summary = "解锁用户登录")
+    @OperationLog(module = "用户管理", name = "解锁用户登录", type = OperationType.UPDATE)
+    @PutMapping("/{userId}/unlock")
+    @SaCheckPermission("system:user:update")
+    public Result<Boolean> unlockUser(@Parameter(description = "用户ID") @PathVariable("userId") Long userId) {
+        userService.unlockUser(userId);
         return Result.success(true);
     }
 

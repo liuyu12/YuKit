@@ -9,6 +9,7 @@ import cn.lycoder.boot.module.system.controller.admin.user.vo.UserUpdateReqVO;
 import cn.lycoder.boot.module.system.convert.user.UserConvert;
 import cn.lycoder.boot.module.system.dal.dataobject.user.SystemUserDO;
 import cn.lycoder.boot.module.system.dal.mapper.user.SystemUserMapper;
+import cn.lycoder.boot.module.system.service.auth.LoginAttemptService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -32,6 +33,7 @@ public class UserServiceImpl implements UserService {
     private final SystemUserMapper userMapper;
     private final UserConvert userConvert;
     private final PasswordEncoder passwordEncoder;
+    private final LoginAttemptService loginAttemptService;
 
     @Override
     @IgnoreDataPermission
@@ -67,6 +69,14 @@ public class UserServiceImpl implements UserService {
         validateUserExists(userId);
         // @TableLogic 生效，实际执行 UPDATE del_flag='2'
         userMapper.deleteById(userId);
+    }
+
+    @Override
+    @IgnoreDataPermission
+    public void unlockUser(Long userId) {
+        // 解锁以用户名为维度清除 Redis 失败计数，先确保用户存在
+        SystemUserDO user = validateUserExists(userId);
+        loginAttemptService.reset(user.getUserName());
     }
 
     @Override

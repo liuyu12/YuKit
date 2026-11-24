@@ -181,6 +181,15 @@ yukit:
     line-count: 20
     # Redis key 前缀，多项目共用 Redis 时隔离命名空间
     redis-key-prefix: "yukit:captcha:"
+  login-lock:
+    # 登录失败锁定总开关（与 IP 级 @RateLimiter 互补：此项按账号维度防定向爆破）
+    enabled: true
+    # 触发锁定的连续失败次数
+    max-fail-count: 5
+    # 失败计数窗口（秒），同时作为锁定时长：最后一次失败后到期自动解锁（默认 10 分钟）
+    window-seconds: 600
+    # Redis 失败计数 key 前缀
+    fail-key-prefix: "yukit:login:fail:"
   cache:
     # 本地缓存总开关，false 则不装配 CacheManager（@Cacheable 失效）
     enabled: true

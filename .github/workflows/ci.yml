@@ -12,6 +12,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        # fetch-depth: 0 拉全历史，Sonar 才能正确计算 New Code（增量）与 blame 归属
+        with:
+          fetch-depth: 0
 
       # 与本地开发对齐：OpenJDK 21（本机为 Microsoft build，CI 用同名发行版）
       - name: Setup JDK 21
@@ -25,3 +28,19 @@ jobs:
       # verify 同时完成全 reactor 编译与打包，任何模块编译/测试失败即红灯
       - name: Build & Test
         run: ./mvnw -B -ntp verify
+
+      # SonarCloud 质量闸门：一次构建同时产报告并判定 Quality Gate，未达标红灯。
+      # 未配置 secrets 时（如 fork/初次接入）自动跳过，不阻断主流程。
+      # 需在仓库 Settings → Secrets 配置：SONAR_TOKEN（SonarCloud 生成）、SONAR_ORG（组织名）。
+      - name: Sonar Quality Gate
+        if: env.SONAR_TOKEN != null
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_ORG: ${{ secrets.SONAR_ORG }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >
+          ./mvnw -B -ntp verify -Psonar sonar:sonar
+          -Dsonar.projectKey=${{ github.repository }}
+          -Dsonar.organization=${SONAR_ORG}
+          -Dsonar.host.url=https://sonarcloud.io
+          -Dsonar.qualitygate.wait=true

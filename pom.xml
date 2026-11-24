@@ -27,6 +27,9 @@
         <maven-compiler-plugin.version>3.14.1</maven-compiler-plugin.version>
         <maven-surefire-plugin.version>3.5.4</maven-surefire-plugin.version>
         <flatten-maven-plugin.version>1.7.2</flatten-maven-plugin.version>
+        <!-- Sonar 质量闸门专用（仅 -Psonar 激活，不进日常构建）；版本需与 JDK21 兼容 -->
+        <jacoco-maven-plugin.version>0.8.12</jacoco-maven-plugin.version>
+        <sonar-maven-plugin.version>3.9.1</sonar-maven-plugin.version>
     </properties>
 
     <dependencies>
@@ -155,5 +158,41 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <!--
+          Sonar 质量闸门：非默认激活，本地 `mvn verify` 不受影响。
+          CI 用 `mvn verify -Psonar sonar:sonar` 触发：JaCoCo 产覆盖率 → Sonar 读取并按 Quality Gate 判定，
+          qualitygate.wait=true 使未达标构建失败。SONAR_TOKEN/SONAR_ORG 由 CI secrets 注入。
+        -->
+        <profile>
+            <id>sonar</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.jacoco</groupId>
+                        <artifactId>jacoco-maven-plugin</artifactId>
+                        <version>${jacoco-maven-plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>prepare-agent</id>
+                                <goals><goal>prepare-agent</goal></goals>
+                            </execution>
+                            <execution>
+                                <id>report</id>
+                                <phase>verify</phase>
+                                <goals><goal>report</goal></goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.sonarsource.scanner.maven</groupId>
+                        <artifactId>sonar-maven-plugin</artifactId>
+                        <version>${sonar-maven-plugin.version}</version>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
 </project>

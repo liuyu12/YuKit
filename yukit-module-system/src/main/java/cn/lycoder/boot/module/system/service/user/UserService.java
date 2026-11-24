@@ -29,6 +29,11 @@ public interface UserService {
     void deleteUser(Long userId);
 
     /**
+     * 强制解锁用户登录：清除失败计数，立即解除因连续失败触发的锁定
+     */
+    void unlockUser(Long userId);
+
+    /**
      * 获取用户，不存在抛异常
      */
     SystemUserDO getUser(Long userId);

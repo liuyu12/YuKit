@@ -19,6 +19,8 @@ public final class SystemErrorCodeConstants {
     public static final ErrorCode AUTH_LOGIN_USER_DISABLED = new ErrorCode(1002000001, "登录失败，账号被禁用");
     public static final ErrorCode AUTH_LOGIN_CAPTCHA_CODE_ERROR = new ErrorCode(1002000002, "验证码不正确，原因：{}");
     public static final ErrorCode AUTH_LOGOUT_FAILED = new ErrorCode(1002000003, "退出登录失败");
+    public static final ErrorCode AUTH_LOGIN_ACCOUNT_LOCKED = new ErrorCode(1002000004, "登录失败，账号已被锁定");
+    public static final ErrorCode ONLINE_SESSION_NOT_EXISTS = new ErrorCode(1002000005, "会话不存在或已下线");
 
     // ========== 用户模块 1-002-001-xxx ==========
 
