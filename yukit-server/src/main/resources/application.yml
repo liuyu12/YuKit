@@ -61,6 +61,17 @@ mybatis-plus:
       logic-delete-value: 1
       logic-not-delete-value: 0
 
+############## 接口文档 springdoc-openapi ##############
+springdoc:
+  api-docs:
+    # 文档总开关；生产环境务必置 false（或整体移除依赖）关闭，避免暴露接口面
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+
 ############## Sa-Token 配置 ##############
 sa-token:
   # token 名称（同时也是 cookie 名称）
@@ -82,14 +93,40 @@ sa-token:
 
 ############## 安全模块配置 ##############
 yukit:
+  # 接口访问日志：每请求输出一行摘要（traceId/方法/路径/状态/业务code/耗时/IP/用户/UA）
+  access-log:
+    # 总开关，false 则不装配访问日志过滤器
+    enabled: true
+    # 不记录噪音路径（Ant 风格），默认已含文档/健康检查端点，可按需追加
+    exclude-paths:
+      - /v3/api-docs
+      - /v3/api-docs/**
+      - /swagger-ui.html
+      - /swagger-ui/**
+      - /actuator/**
+      - /favicon.ico
+    # 解析业务 code/msg 时最多窥探的响应体字节数（有界，避免大 body 全量缓冲）
+    max-response-body-bytes: 8192
+    # 窥探请求体的字节上限（仅 application/json 请求才包装）
+    max-request-body-bytes: 8192
+    # 全局打印请求/响应体（脱敏+截断），建议只在 dev 按需开启；生产保持 false
+    log-request-body: false
+    log-response-body: false
+    # 是否允许请求头 X-Access-Log-Body: true 对单次请求强制打印 body；生产建议置 false 封死动态开启
+    allow-debug-header: true
   security:
     # 免登录白名单（默认已含 /error 与静态资源，此处追加业务接口）
     exclude-paths:
       - /system/auth/login
       - /system/auth/captcha
+      # 接口文档端点放行，否则 Swagger UI / OpenAPI JSON 会被登录校验拦成 401
+      - /v3/api-docs
+      - /v3/api-docs/**
+      - /swagger-ui.html
+      - /swagger-ui/**
   captcha:
     # 登录图形验证码总开关，开发/内网调试可置 false 跳过校验
-    enabled: true
+    enabled: false
     # 验证码有效期（秒），答案存 Redis 到期自动失效
     expire-seconds: 120
     # 图片尺寸与字符数
@@ -111,4 +148,4 @@ yukit:
       # 用户/权限类：适中
       user: maximumSize=1000,expireAfterWrite=5m
     # 是否记录命中率统计（排查期可开，生产建议关）
-    record-stats: false
+    record-stats: true

@@ -10,6 +10,9 @@ import cn.lycoder.boot.module.system.convert.user.UserConvert;
 import cn.lycoder.boot.module.system.dal.dataobject.user.SystemUserDO;
 import cn.lycoder.boot.module.system.service.user.UserService;
 import cn.dev33.satoken.annotation.SaCheckPermission;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -26,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
  * <p>
  * RESTful 风格：资源用复数名词，操作由 HTTP 方法表达，路径不再带 create/update/get 等动词
  */
+@Tag(name = "用户管理")
 @RestController
 @RequestMapping("/system/users")
 @RequiredArgsConstructor
@@ -37,6 +41,7 @@ public class UserController {
     /**
      * 创建用户
      */
+    @Operation(summary = "创建用户")
     @PostMapping
     @SaCheckPermission("system:user:create")
     public Result<Long> createUser(@RequestBody @Valid UserCreateReqVO reqVO) {
@@ -46,9 +51,10 @@ public class UserController {
     /**
      * 更新用户
      */
+    @Operation(summary = "更新用户")
     @PutMapping("/{userId}")
     @SaCheckPermission("system:user:update")
-    public Result<Boolean> updateUser(@PathVariable("userId") Long userId,
+    public Result<Boolean> updateUser(@Parameter(description = "用户ID") @PathVariable("userId") Long userId,
                                       @RequestBody @Valid UserUpdateReqVO reqVO) {
         // 以路径参数为准，避免 URL 与 body 不一致时误改
         reqVO.setUserId(userId);
@@ -59,9 +65,10 @@ public class UserController {
     /**
      * 删除用户（逻辑删除）
      */
+    @Operation(summary = "删除用户（逻辑删除）")
     @DeleteMapping("/{userId}")
     @SaCheckPermission("system:user:delete")
-    public Result<Boolean> deleteUser(@PathVariable("userId") Long userId) {
+    public Result<Boolean> deleteUser(@Parameter(description = "用户ID") @PathVariable("userId") Long userId) {
         userService.deleteUser(userId);
         return Result.success(true);
     }
@@ -69,9 +76,10 @@ public class UserController {
     /**
      * 获取用户详情
      */
+    @Operation(summary = "获取用户详情")
     @GetMapping("/{userId}")
     @SaCheckPermission("system:user:query")
-    public Result<UserRespVO> getUser(@PathVariable("userId") Long userId) {
+    public Result<UserRespVO> getUser(@Parameter(description = "用户ID") @PathVariable("userId") Long userId) {
         SystemUserDO user = userService.getUser(userId);
         return Result.success(user == null ? null : userConvert.convert(user));
     }
@@ -79,6 +87,7 @@ public class UserController {
     /**
      * 分页查询用户
      */
+    @Operation(summary = "分页查询用户")
     @GetMapping
     @SaCheckPermission("system:user:query")
     public Result<PageResult<UserRespVO>> getUserPage(@Valid UserPageReqVO reqVO) {

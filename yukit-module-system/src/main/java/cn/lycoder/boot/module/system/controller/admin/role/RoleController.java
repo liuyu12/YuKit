@@ -11,6 +11,9 @@ import cn.lycoder.boot.module.system.convert.role.RoleConvert;
 import cn.lycoder.boot.module.system.dal.dataobject.role.SystemRoleDO;
 import cn.lycoder.boot.module.system.service.role.RoleService;
 import cn.dev33.satoken.annotation.SaCheckPermission;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -29,6 +32,7 @@ import java.util.List;
  * <p>
  * RESTful 风格 + Sa-Token 细粒度权限，权限码与 sys_menu.perms 对应
  */
+@Tag(name = "角色管理")
 @RestController
 @RequestMapping("/system/roles")
 @RequiredArgsConstructor
@@ -40,6 +44,7 @@ public class RoleController {
     /**
      * 创建角色（可携带 menuIds 一并授权）
      */
+    @Operation(summary = "创建角色（可携带 menuIds 一并授权）")
     @PostMapping
     @SaCheckPermission("system:role:create")
     public Result<Long> createRole(@RequestBody @Valid RoleCreateReqVO reqVO) {
@@ -49,9 +54,10 @@ public class RoleController {
     /**
      * 更新角色
      */
+    @Operation(summary = "更新角色")
     @PutMapping("/{roleId}")
     @SaCheckPermission("system:role:update")
-    public Result<Boolean> updateRole(@PathVariable("roleId") Long roleId,
+    public Result<Boolean> updateRole(@Parameter(description = "角色ID") @PathVariable("roleId") Long roleId,
                                       @RequestBody @Valid RoleUpdateReqVO reqVO) {
         reqVO.setRoleId(roleId);
         roleService.updateRole(reqVO);
@@ -61,9 +67,10 @@ public class RoleController {
     /**
      * 删除角色（逻辑删除，同时清理菜单授权）
      */
+    @Operation(summary = "删除角色（逻辑删除，同时清理菜单授权）")
     @DeleteMapping("/{roleId}")
     @SaCheckPermission("system:role:delete")
-    public Result<Boolean> deleteRole(@PathVariable("roleId") Long roleId) {
+    public Result<Boolean> deleteRole(@Parameter(description = "角色ID") @PathVariable("roleId") Long roleId) {
         roleService.deleteRole(roleId);
         return Result.success(true);
     }
@@ -71,9 +78,10 @@ public class RoleController {
     /**
      * 获取角色详情
      */
+    @Operation(summary = "获取角色详情")
     @GetMapping("/{roleId}")
     @SaCheckPermission("system:role:query")
-    public Result<RoleRespVO> getRole(@PathVariable("roleId") Long roleId) {
+    public Result<RoleRespVO> getRole(@Parameter(description = "角色ID") @PathVariable("roleId") Long roleId) {
         SystemRoleDO role = roleService.getRole(roleId);
         return Result.success(role == null ? null : roleConvert.convert(role));
     }
@@ -81,6 +89,7 @@ public class RoleController {
     /**
      * 分页查询角色
      */
+    @Operation(summary = "分页查询角色")
     @GetMapping
     @SaCheckPermission("system:role:query")
     public Result<PageResult<RoleRespVO>> getRolePage(@Valid RolePageReqVO reqVO) {
@@ -91,6 +100,7 @@ public class RoleController {
     /**
      * 正常状态角色简单列表（用户分配角色等下拉场景）
      */
+    @Operation(summary = "正常状态角色简单列表（下拉场景）")
     @GetMapping("/simple-list")
     @SaCheckPermission("system:role:query")
     public Result<List<RoleRespVO>> getRoleSimpleList() {
@@ -100,9 +110,10 @@ public class RoleController {
     /**
      * 角色授权菜单（全量覆盖）
      */
+    @Operation(summary = "角色授权菜单（全量覆盖）")
     @PutMapping("/{roleId}/menus")
     @SaCheckPermission("system:role:assign")
-    public Result<Boolean> assignRoleMenu(@PathVariable("roleId") Long roleId,
+    public Result<Boolean> assignRoleMenu(@Parameter(description = "角色ID") @PathVariable("roleId") Long roleId,
                                           @RequestBody @Valid RoleAssignMenuReqVO reqVO) {
         roleService.assignRoleMenu(roleId, reqVO.getMenuIds());
         return Result.success(true);
@@ -111,9 +122,10 @@ public class RoleController {
     /**
      * 查询角色已授权的菜单ID集合（授权回显）
      */
+    @Operation(summary = "查询角色已授权的菜单ID集合（授权回显）")
     @GetMapping("/{roleId}/menus")
     @SaCheckPermission("system:role:query")
-    public Result<List<Long>> getMenuIdsByRoleId(@PathVariable("roleId") Long roleId) {
+    public Result<List<Long>> getMenuIdsByRoleId(@Parameter(description = "角色ID") @PathVariable("roleId") Long roleId) {
         return Result.success(roleService.getMenuIdsByRoleId(roleId));
     }
 }

@@ -12,9 +12,9 @@
 
     <property name="APP_NAME" value="yukit"/>
     <property name="LOG_HOME" value="${user.home}/logs/${APP_NAME}"/>
-    <!-- 文件日志统一格式：时间 [线程] 级别 logger - 消息 -->
+    <!-- 文件日志统一格式：时间 [线程] 级别 [traceId] logger - 消息 -->
     <property name="FILE_PATTERN"
-              value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"/>
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{traceId:-}] %logger{50} - %msg%n"/>
 
     <!-- 本地开发 / 默认：彩色控制台，业务包 DEBUG（含 MyBatis SQL） -->
     <springProfile name="dev | default">
@@ -26,7 +26,7 @@
                     %15.15thread：线程名定宽 15 列，横向对齐方便扫读
                     注意：%faint 等个别颜色字不是 Logback 标准转换词，跨版本不可用
                 -->
-                <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) %magenta([%15.15thread]) %cyan(%-40.40logger{39}) : %msg%n</pattern>
+                <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) %magenta([%15.15thread]) %green([%X{traceId:-}]) %cyan(%-40.40logger{39}) : %msg%n</pattern>
                 <charset>UTF-8</charset>
             </encoder>
         </appender>

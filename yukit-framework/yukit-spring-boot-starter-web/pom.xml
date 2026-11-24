@@ -22,6 +22,11 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
+        <!-- 接口文档：springdoc-openapi（OpenAPI 3 + Swagger UI），版本由 BOM 管理，classpath 存在时自动装配 -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+        </dependency>
 
     </dependencies>
 

@@ -1,5 +1,6 @@
 package cn.lycoder.boot.module.system.controller.admin.role.vo;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
@@ -16,6 +17,7 @@ public class RoleAssignMenuReqVO {
     /**
      * 授权的菜单ID列表，全量覆盖
      */
+    @Schema(description = "授权的菜单ID列表，全量覆盖")
     @NotNull(message = "菜单列表不能为空")
     private List<Long> menuIds;
 }

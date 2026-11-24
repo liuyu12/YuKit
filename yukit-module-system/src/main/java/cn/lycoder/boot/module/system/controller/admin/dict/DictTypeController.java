@@ -10,6 +10,9 @@ import cn.lycoder.boot.module.system.convert.dict.DictTypeConvert;
 import cn.lycoder.boot.module.system.dal.dataobject.dict.SystemDictTypeDO;
 import cn.lycoder.boot.module.system.service.dict.DictTypeService;
 import cn.dev33.satoken.annotation.SaCheckPermission;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -28,6 +31,7 @@ import java.util.List;
  * <p>
  * RESTful 风格 + Sa-Token 细粒度权限，权限码与 sys_menu.perms 对应
  */
+@Tag(name = "字典类型管理")
 @RestController
 @RequestMapping("/system/dict-types")
 @RequiredArgsConstructor
@@ -39,6 +43,7 @@ public class DictTypeController {
     /**
      * 创建字典类型
      */
+    @Operation(summary = "创建字典类型")
     @PostMapping
     @SaCheckPermission("system:dict:create")
     public Result<Long> createDictType(@RequestBody @Valid DictTypeCreateReqVO reqVO) {
@@ -48,9 +53,10 @@ public class DictTypeController {
     /**
      * 更新字典类型
      */
+    @Operation(summary = "更新字典类型")
     @PutMapping("/{dictId}")
     @SaCheckPermission("system:dict:update")
-    public Result<Boolean> updateDictType(@PathVariable("dictId") Long dictId,
+    public Result<Boolean> updateDictType(@Parameter(description = "字典类型ID") @PathVariable("dictId") Long dictId,
                                           @RequestBody @Valid DictTypeUpdateReqVO reqVO) {
         reqVO.setDictId(dictId);
         dictTypeService.updateDictType(reqVO);
@@ -60,9 +66,10 @@ public class DictTypeController {
     /**
      * 删除字典类型（该类型下存在字典数据时不允许删除）
      */
+    @Operation(summary = "删除字典类型（该类型下存在字典数据时不允许删除）")
     @DeleteMapping("/{dictId}")
     @SaCheckPermission("system:dict:delete")
-    public Result<Boolean> deleteDictType(@PathVariable("dictId") Long dictId) {
+    public Result<Boolean> deleteDictType(@Parameter(description = "字典类型ID") @PathVariable("dictId") Long dictId) {
         dictTypeService.deleteDictType(dictId);
         return Result.success(true);
     }
@@ -70,9 +77,10 @@ public class DictTypeController {
     /**
      * 获取字典类型详情
      */
+    @Operation(summary = "获取字典类型详情")
     @GetMapping("/{dictId}")
     @SaCheckPermission("system:dict:query")
-    public Result<DictTypeRespVO> getDictType(@PathVariable("dictId") Long dictId) {
+    public Result<DictTypeRespVO> getDictType(@Parameter(description = "字典类型ID") @PathVariable("dictId") Long dictId) {
         SystemDictTypeDO dictType = dictTypeService.getDictType(dictId);
         return Result.success(dictType == null ? null : dictTypeConvert.convert(dictType));
     }
@@ -80,6 +88,7 @@ public class DictTypeController {
     /**
      * 分页查询字典类型
      */
+    @Operation(summary = "分页查询字典类型")
     @GetMapping
     @SaCheckPermission("system:dict:query")
     public Result<PageResult<DictTypeRespVO>> getDictTypePage(@Valid DictTypePageReqVO reqVO) {
@@ -90,6 +99,7 @@ public class DictTypeController {
     /**
      * 全部正常状态字典类型（下拉列表）
      */
+    @Operation(summary = "全部正常状态字典类型（下拉列表）")
     @GetMapping("/simple-list")
     @SaCheckPermission("system:dict:query")
     public Result<List<DictTypeRespVO>> getDictTypeSimpleList() {

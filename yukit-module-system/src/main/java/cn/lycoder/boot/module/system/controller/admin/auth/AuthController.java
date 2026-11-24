@@ -6,6 +6,8 @@ import cn.lycoder.boot.module.system.controller.admin.auth.vo.AuthLoginReqVO;
 import cn.lycoder.boot.module.system.controller.admin.auth.vo.AuthLoginRespVO;
 import cn.lycoder.boot.module.system.service.auth.AuthService;
 import cn.lycoder.boot.module.system.service.captcha.CaptchaService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * 管理后台 - 认证
  */
+@Tag(name = "认证管理")
 @RestController
 @RequestMapping("/system/auth")
 @RequiredArgsConstructor
@@ -31,6 +34,7 @@ public class AuthController {
      * <p>
      * 该路径已配置在免登录白名单 yukit.security.exclude-paths 中
      */
+    @Operation(summary = "获取登录图形验证码")
     @GetMapping("/captcha")
     public Result<AuthCaptchaRespVO> captcha() {
         return Result.success(captchaService.generate());
@@ -41,6 +45,7 @@ public class AuthController {
      * <p>
      * 该路径已配置在免登录白名单 yukit.security.exclude-paths 中
      */
+    @Operation(summary = "账号密码登录")
     @PostMapping("/login")
     public Result<AuthLoginRespVO> login(@RequestBody @Valid AuthLoginReqVO reqVO,
                                          HttpServletRequest request) {
@@ -50,6 +55,7 @@ public class AuthController {
     /**
      * 退出登录
      */
+    @Operation(summary = "退出登录")
     @PostMapping("/logout")
     public Result<Boolean> logout() {
         authService.logout();
