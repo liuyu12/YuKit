@@ -31,6 +31,14 @@
             <artifactId>caffeine</artifactId>
         </dependency>
 
+        <!-- Redis 后端（可选）：仅在 yukit.cache.type=redis 时装配 RedisCacheManager；
+             optional 不向下传递，运行期由应用（已因 Sa-Token 引入 Redis）提供依赖与连接工厂 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+            <optional>true</optional>
+        </dependency>
+
         <!-- 自动配置元数据 + @ConfigurationProperties 支持 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

@@ -59,6 +59,12 @@
                 <artifactId>sa-token-redis-template</artifactId>
                 <version>${sa-token.version}</version>
             </dependency>
+            <!-- Sa-Token Alone 独立 Redis（Spring Boot 4 专用）：将 Sa-Token 会话连到独立 Redis/库，与业务缓存分离 -->
+            <dependency>
+                <groupId>cn.dev33</groupId>
+                <artifactId>sa-token-alone-redis-by-spring-boot4</artifactId>
+                <version>${sa-token.version}</version>
+            </dependency>
 
             <!-- springdoc-openapi：OpenAPI 3 接口文档 + Swagger UI（Boot 4 对应 3.x） -->
             <dependency>

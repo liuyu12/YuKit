@@ -28,14 +28,15 @@ spring:
       leak-detection-threshold: 30000
       # 每个新连接建立后执行，会话时区双保险（与 URL 的 serverTimezone 叠加）
       connection-init-sql: SET time_zone = '+08:00'
-  # Redis：Sa-Token 会话持久化（sa-token-redis-template 接管）
+  # Redis 主连接：业务缓存(@Cacheable) + 验证码等；Sa-Token 会话另走 alone 独立库（见下方 sa-token.alone-redis）
   data:
     redis:
       host: localhost
       port: 6379
       # 生产同样改环境变量注入：${REDIS_PASSWORD}
       password: 123456
-      database: 1
+      # 业务库：与 Sa-Token 会话库(alone-redis.database)分开
+      database: 0
       # 命令超时，比默认 2s 稍紧，快速失败
       timeout: 3000
       lettuce:
@@ -90,6 +91,13 @@ sa-token:
   key-prefix: "yukit:satoken:"
   # 会话存储已从内存切换到 Redis（sa-token-redis-template 自动装配 SaTokenDao），
   # 重启不掉线、支持集群部署；未引入该插件时默认存进程内存
+  # Alone 独立 Redis：会话数据连到独立库，与业务缓存分库（结构同 spring.data.redis，需注册 SaAloneRedisInject 生效）
+  alone-redis:
+    host: ${spring.data.redis.host}
+    port: ${spring.data.redis.port}
+    password: ${spring.data.redis.password}
+    # 会话专用库；删掉本行即回退为会话与业务共用主库
+    database: 1
 
 ############## 安全模块配置 ##############
 yukit:
@@ -139,6 +147,10 @@ yukit:
   cache:
     # 本地缓存总开关，false 则不装配 CacheManager（@Cacheable 失效）
     enabled: true
+    # 缓存后端：caffeine（本地，默认，单机/可容忍各节点独立）| redis（集中式，多实例共享、重启不丢）
+    # 切 redis 复用应用主连接工厂(spring.data.redis，即业务库)，业务侧 @Cacheable 无需改动
+    type: caffeine
+    # ===== 以下 spec/caches 仅 type=caffeine 生效 =====
     # 默认规格：未单独声明的缓存名套用（最多 500 条、写入后 10 分钟过期）
     spec: maximumSize=500,expireAfterWrite=10m
     # 按缓存名差异化：key 与 @Cacheable(cacheNames=...) 对应
@@ -149,3 +161,13 @@ yukit:
       user: maximumSize=1000,expireAfterWrite=5m
     # 是否记录命中率统计（排查期可开，生产建议关）
     record-stats: true
+    # ===== 以下 redis 块仅 type=redis 生效 =====
+    redis:
+      # key 前缀，最终形如 yukit:cache:dict::sys_user_sex
+      key-prefix: "yukit:cache:"
+      # 默认存活时间，0 表示不过期
+      time-to-live: 10m
+      # 按缓存名覆盖 TTL（对应 @Cacheable 的 cacheNames）
+      ttl-by-cache:
+        dict: 1h
+        user: 5m

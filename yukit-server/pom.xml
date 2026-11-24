@@ -49,6 +49,11 @@
             <groupId>cn.dev33</groupId>
             <artifactId>sa-token-redis-template</artifactId>
         </dependency>
+        <!-- Sa-Token Alone 独立 Redis（Boot4）：会话与业务缓存分库，配合 SaAloneRedisInject 使用 -->
+        <dependency>
+            <groupId>cn.dev33</groupId>
+            <artifactId>sa-token-alone-redis-by-spring-boot4</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
