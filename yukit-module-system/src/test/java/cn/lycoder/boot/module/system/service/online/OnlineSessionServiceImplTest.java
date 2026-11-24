@@ -52,7 +52,7 @@ class OnlineSessionServiceImplTest {
         when(session.get(OnlineSessionService.ATTR_LOGIN_IP)).thenReturn("1.1.1.1");
         when(session.get(OnlineSessionService.ATTR_USER_AGENT)).thenReturn("curl/8");
         when(session.get(OnlineSessionService.ATTR_LOGIN_TIME)).thenReturn(1_700_000_000_000L);
-        when(userMapper.selectBatchIds(anyCollection()))
+        when(userMapper.selectByIds(anyCollection()))
                 .thenReturn(List.of(user(1L, "admin", "超级管理员")));
 
         try (MockedStatic<StpUtil> stp = mockStatic(StpUtil.class)) {
@@ -82,7 +82,7 @@ class OnlineSessionServiceImplTest {
             stp.when(() -> StpUtil.searchTokenValue("*", 0, 1000, false)).thenReturn(List.of());
             assertThat(service.getOnlineSessionList()).isEmpty();
         }
-        verify(userMapper, never()).selectBatchIds(any());
+        verify(userMapper, never()).selectByIds(anyCollection());
     }
 
     @Test

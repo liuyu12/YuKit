@@ -48,7 +48,7 @@ public class AuthController {
      * 该路径已配置在免登录白名单 yukit.security.exclude-paths 中
      */
     @Operation(summary = "账号密码登录")
-    @RateLimiter(count = 5, time = 60, limitType = LimitType.IP, message = "登录尝试过于频繁，请稍后再试")
+    @RateLimiter(count = 10, time = 60, limitType = LimitType.IP, message = "登录尝试过于频繁，请稍后再试")
     @PostMapping("/login")
     public Result<AuthLoginRespVO> login(@RequestBody @Valid AuthLoginReqVO reqVO,
                                          HttpServletRequest request) {

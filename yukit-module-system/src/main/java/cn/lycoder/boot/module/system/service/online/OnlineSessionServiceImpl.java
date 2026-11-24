@@ -110,7 +110,7 @@ public class OnlineSessionServiceImpl implements OnlineSessionService {
             return;
         }
         Map<Long, SystemUserDO> userMap = DataPermissionUtils.executeIgnore(() ->
-                userMapper.selectBatchIds(userIds).stream()
+                userMapper.selectByIds(userIds).stream()
                         .collect(Collectors.toMap(SystemUserDO::getUserId, Function.identity(), (a, b) -> a)));
         sessions.forEach(vo -> {
             SystemUserDO user = userMap.get(vo.getUserId());
