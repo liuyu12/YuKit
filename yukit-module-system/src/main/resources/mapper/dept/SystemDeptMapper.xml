@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.lycoder.boot.module.system.dal.mapper.dept.SystemDeptMapper">
+
+    <!-- 某部门的全部子孙 ID：ancestors 祖级链中包含该 deptId -->
+    <select id="selectChildDeptIds" resultType="java.lang.Long">
+        select dept_id
+        from sys_dept
+        where del_flag = '0' and find_in_set(#{deptId}, ancestors)
+    </select>
+
+    <!-- 父部门变更后，将子孙 ancestors 中的旧父链前缀整体替换为新父链 -->
+    <update id="updateDeptChildren">
+        update sys_dept
+        set ancestors = replace(ancestors,
+                                concat(#{oldAncestors}, ',', #{deptId}),
+                                concat(#{newAncestors}, ',', #{deptId}))
+        where del_flag = '0'
+          and ancestors like concat(#{oldAncestors}, ',', #{deptId}, '%')
+    </update>
+
+</mapper>

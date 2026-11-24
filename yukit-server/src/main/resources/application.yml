@@ -73,6 +73,29 @@ springdoc:
     tags-sorter: alpha
     operations-sorter: alpha
 
+############## 可观测性 Actuator / Micrometer ##############
+# 生产两种加固方式（择一）：
+#  1) 独立管理端口：设 management.server.port，业务端口完全不暴露 actuator，无需安全白名单；
+#  2) 同端口（当前默认）：仅暴露必要端点，/actuator/** 已在下方 yukit.security.exclude-paths 放行，
+#     生产应改为网关/内网受限访问，或收紧 exposure include（保留 health 即可）。
+management:
+  endpoints:
+    web:
+      exposure:
+        # 白名单式暴露：health 供存活/就绪探针，metrics+prometheus 供监控抓取；关闭 env/beans 等敏感端点
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      # 详情仅授权后可见，避免向未授权方泄露 DB/Redis 等依赖信息
+      show-details: when_authorized
+      probes:
+        # 开启 k8s 存活/就绪探针：/actuator/health/liveness、/readiness
+        enabled: true
+  metrics:
+    tags:
+      # 为所有指标打应用标签，多服务共用 Prometheus 时区分来源
+      application: yukit
+
 ############## Sa-Token 配置 ##############
 sa-token:
   # token 名称（同时也是 cookie 名称）
@@ -132,6 +155,8 @@ yukit:
       - /v3/api-docs/**
       - /swagger-ui.html
       - /swagger-ui/**
+      # Actuator 端点放行（同端口部署时）；若改用独立 management.server.port 可移除此条
+      - /actuator/**
   captcha:
     # 登录图形验证码总开关，开发/内网调试可置 false 跳过校验
     enabled: false

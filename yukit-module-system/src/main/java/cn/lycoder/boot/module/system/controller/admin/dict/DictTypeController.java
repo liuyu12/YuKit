@@ -1,5 +1,8 @@
 package cn.lycoder.boot.module.system.controller.admin.dict;
 
+import cn.lycoder.boot.framework.common.operatelog.OperationLog;
+import cn.lycoder.boot.framework.common.operatelog.OperationType;
+import cn.lycoder.boot.framework.protection.idempotent.Idempotent;
 import cn.lycoder.boot.framework.common.pojo.PageResult;
 import cn.lycoder.boot.framework.common.pojo.Result;
 import cn.lycoder.boot.module.system.controller.admin.dict.vo.DictTypeCreateReqVO;
@@ -44,6 +47,8 @@ public class DictTypeController {
      * 创建字典类型
      */
     @Operation(summary = "创建字典类型")
+    @OperationLog(module = "字典类型", name = "创建字典类型", type = OperationType.INSERT)
+    @Idempotent(timeout = 3, message = "请勿重复提交")
     @PostMapping
     @SaCheckPermission("system:dict:create")
     public Result<Long> createDictType(@RequestBody @Valid DictTypeCreateReqVO reqVO) {
@@ -54,6 +59,7 @@ public class DictTypeController {
      * 更新字典类型
      */
     @Operation(summary = "更新字典类型")
+    @OperationLog(module = "字典类型", name = "更新字典类型", type = OperationType.UPDATE)
     @PutMapping("/{dictId}")
     @SaCheckPermission("system:dict:update")
     public Result<Boolean> updateDictType(@Parameter(description = "字典类型ID") @PathVariable("dictId") Long dictId,
@@ -67,6 +73,7 @@ public class DictTypeController {
      * 删除字典类型（该类型下存在字典数据时不允许删除）
      */
     @Operation(summary = "删除字典类型（该类型下存在字典数据时不允许删除）")
+    @OperationLog(module = "字典类型", name = "删除字典类型", type = OperationType.DELETE)
     @DeleteMapping("/{dictId}")
     @SaCheckPermission("system:dict:delete")
     public Result<Boolean> deleteDictType(@Parameter(description = "字典类型ID") @PathVariable("dictId") Long dictId) {

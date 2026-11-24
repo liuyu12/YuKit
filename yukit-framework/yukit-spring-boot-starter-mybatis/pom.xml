@@ -25,16 +25,29 @@
             <artifactId>mybatis-plus-spring-boot4-starter</artifactId>
         </dependency>
 
-        <!-- 分页拦截器依赖（3.5.9+ 拆出） -->
+        <!-- 分页拦截器依赖（3.5.9+ 拆出），同时为数据权限插件提供 JSqlParser -->
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-jsqlparser</artifactId>
+        </dependency>
+
+        <!-- AOP：@IgnoreDataPermission 切面（Boot4 无 starter-aop，直接依赖 aspectjweaver，版本由 BOM 托管） -->
+        <dependency>
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjweaver</artifactId>
         </dependency>
 
         <!-- Spring Boot 自动配置元数据 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-autoconfigure</artifactId>
+        </dependency>
+
+        <!-- 单元测试（JUnit5 + Mockito + AssertJ，版本由 BOM 托管） -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

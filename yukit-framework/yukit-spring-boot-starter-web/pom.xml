@@ -32,6 +32,12 @@
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
         </dependency>
+        <!-- AOP：操作日志切面（@OperationLog）依赖 AspectJ（Boot 4 无 starter-aop，直接依赖 aspectjweaver，版本由 BOM 托管）；
+             spring-aop 随 spring-boot-starter-web 传递，AopAutoConfiguration 检测到 AspectJ 即自动开启代理 -->
+        <dependency>
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjweaver</artifactId>
+        </dependency>
 
     </dependencies>
 

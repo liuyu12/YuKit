@@ -10,4 +10,17 @@
         where ur.user_id = #{userId} and r.status = '0' and r.del_flag = '0' and r.role_key != ''
     </select>
 
+    <!-- 查询用户拥有的完整角色（含 data_scope），供数据范围切面使用 -->
+    <select id="selectListByUserId" resultType="cn.lycoder.boot.module.system.dal.dataobject.role.SystemRoleDO">
+        select distinct r.*
+        from sys_role r
+        inner join sys_user_role ur on r.role_id = ur.role_id
+        where ur.user_id = #{userId} and r.status = '0' and r.del_flag = '0'
+    </select>
+
+    <!-- 查询角色「自定数据权限」勾选的部门 ID -->
+    <select id="selectDeptIdsByRoleId" resultType="java.lang.Long">
+        select dept_id from sys_role_dept where role_id = #{roleId}
+    </select>
+
 </mapper>

@@ -16,4 +16,14 @@ public interface SystemRoleMapper extends BaseMapper<SystemRoleDO> {
      * 查询用户拥有的角色标识（role_key），供 Sa-Token 角色校验使用
      */
     List<String> selectRoleKeysByUserId(Long userId);
+
+    /**
+     * 查询用户拥有的完整角色（含 data_scope），供数据范围切面计算可见部门
+     */
+    List<SystemRoleDO> selectListByUserId(Long userId);
+
+    /**
+     * 查询角色「自定数据权限」勾选的部门 ID（sys_role_dept）
+     */
+    List<Long> selectDeptIdsByRoleId(Long roleId);
 }

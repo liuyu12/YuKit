@@ -2,3 +2,4 @@ cn.lycoder.boot.framework.web.config.YukitWebAutoConfiguration
 cn.lycoder.boot.framework.web.config.YukitAccessLogAutoConfiguration
 cn.lycoder.boot.framework.web.config.YukitJacksonAutoConfiguration
 cn.lycoder.boot.framework.web.config.YukitSwaggerAutoConfiguration
+cn.lycoder.boot.framework.web.config.YukitOperationLogAutoConfiguration

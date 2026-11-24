@@ -25,6 +25,11 @@
             <groupId>cn.lycoder.boot</groupId>
             <artifactId>yukit-spring-boot-starter-security</artifactId>
         </dependency>
+        <!-- 服务保障：@Idempotent 幂等、@RateLimiter 限流（Redis + AOP） -->
+        <dependency>
+            <groupId>cn.lycoder.boot</groupId>
+            <artifactId>yukit-spring-boot-starter-protection</artifactId>
+        </dependency>
         <!-- 参数校验：@NotBlank 等 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -49,6 +54,12 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+        <!-- 测试：JUnit5 + Mockito（含静态 mock）+ AssertJ -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

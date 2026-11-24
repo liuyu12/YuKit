@@ -2,6 +2,7 @@ package cn.lycoder.boot.module.system.service.user;
 
 import cn.lycoder.boot.framework.common.exception.ServiceException;
 import cn.lycoder.boot.framework.common.pojo.PageResult;
+import cn.lycoder.boot.framework.mybatis.datapermission.annotation.IgnoreDataPermission;
 import cn.lycoder.boot.module.system.controller.admin.user.vo.UserCreateReqVO;
 import cn.lycoder.boot.module.system.controller.admin.user.vo.UserPageReqVO;
 import cn.lycoder.boot.module.system.controller.admin.user.vo.UserUpdateReqVO;
@@ -33,7 +34,9 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
 
     @Override
+    @IgnoreDataPermission
     public Long createUser(UserCreateReqVO reqVO) {
+        // 账号唯一性校验须跨全表进行，不受当前用户可见部门限制，故忽略数据权限
         // 1. 校验账号唯一
         validateUserNameUnique(reqVO.getUserName(), null);
         // 2. ReqVO → DO（MapStruct），密码单独加密
@@ -48,6 +51,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @IgnoreDataPermission
     public void updateUser(UserUpdateReqVO reqVO) {
         // 1. 校验用户存在
         validateUserExists(reqVO.getUserId());
@@ -58,6 +62,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @IgnoreDataPermission
     public void deleteUser(Long userId) {
         validateUserExists(userId);
         // @TableLogic 生效，实际执行 UPDATE del_flag='2'
@@ -65,12 +70,15 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @IgnoreDataPermission
     public SystemUserDO getUser(Long userId) {
+        // 详情按主键查询，交由权限码控制访问，数据范围仅在列表生效
         return userMapper.selectById(userId);
     }
 
     @Override
     public PageResult<SystemUserDO> getUserPage(UserPageReqVO reqVO) {
+        // 数据权限由 MP DataPermissionInterceptor 对 sys_user 自动追加 dept_id 条件，无需在此手动处理
         LambdaQueryWrapper<SystemUserDO> wrapper = Wrappers.<SystemUserDO>lambdaQuery()
                 .like(StringUtils.hasText(reqVO.getUserName()), SystemUserDO::getUserName, reqVO.getUserName())
                 .like(StringUtils.hasText(reqVO.getPhonenumber()), SystemUserDO::getPhonenumber, reqVO.getPhonenumber())

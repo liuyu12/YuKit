@@ -80,6 +80,11 @@
                 <artifactId>yukit-spring-boot-starter-cache</artifactId>
                 <version>${revision}</version>
             </dependency>
+            <dependency>
+                <groupId>cn.lycoder.boot</groupId>
+                <artifactId>yukit-spring-boot-starter-protection</artifactId>
+                <version>${revision}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 

@@ -48,4 +48,13 @@ public final class SystemErrorCodeConstants {
     public static final ErrorCode DICT_DATA_NOT_EXISTS = new ErrorCode(1002004003, "字典数据不存在");
     public static final ErrorCode DICT_DATA_DUPLICATE = new ErrorCode(1002004004, "同一字典类型下键值已存在");
     public static final ErrorCode DICT_DATA_TYPE_NOT_EXISTS = new ErrorCode(1002004005, "字典类型不存在，请先创建字典类型");
+
+    // ========== 部门模块 1-002-005-xxx ==========
+
+    public static final ErrorCode DEPT_NOT_EXISTS = new ErrorCode(1002005000, "部门不存在");
+    public static final ErrorCode DEPT_NAME_EXISTS = new ErrorCode(1002005001, "部门名称已存在于同一父部门下");
+    public static final ErrorCode DEPT_EXITS_CHILDREN = new ErrorCode(1002005002, "存在子部门，不允许删除");
+    public static final ErrorCode DEPT_PARENT_NOT_EXISTS = new ErrorCode(1002005003, "父部门不存在");
+    public static final ErrorCode DEPT_PARENT_ERROR = new ErrorCode(1002005004, "不能设置自己为父部门");
+    public static final ErrorCode DEPT_PARENT_IS_CHILD = new ErrorCode(1002005005, "不能设置自己的子部门为父部门");
 }

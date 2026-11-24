@@ -476,6 +476,39 @@ CREATE TABLE `sys_oper_log` (
 ) ENGINE=InnoDB AUTO_INCREMENT=100 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='操作日志记录';
 
 -- ----------------------------
+-- Table structure for sys_operate_log
+-- YuKit 自研 @OperationLog 切面落库表：相比 RuoYi 遗留 sys_oper_log 增加 trace_id（与访问日志串联）、
+-- user_agent、操作类型细分与操作人字符串，列名与 SystemOperateLogDO 经驼峰映射一一对应
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_operate_log`;
+CREATE TABLE `sys_operate_log` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '日志主键',
+  `trace_id` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '链路追踪ID',
+  `operator` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '操作人（用户名/ID）',
+  `type` int DEFAULT '0' COMMENT '操作类型码（0其它1查询2新增3修改4删除5授权6导出7导入8强退9登录10登出）',
+  `module` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT '' COMMENT '所属模块',
+  `name` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT '' COMMENT '操作名',
+  `request_method` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT '' COMMENT '请求方式',
+  `request_url` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT '' COMMENT '请求URL',
+  `java_method` varchar(200) COLLATE utf8mb4_unicode_ci DEFAULT '' COMMENT '目标Java方法',
+  `user_ip` varchar(128) COLLATE utf8mb4_unicode_ci DEFAULT '' COMMENT '操作IP',
+  `user_agent` varchar(512) COLLATE utf8mb4_unicode_ci DEFAULT '' COMMENT '浏览器UA',
+  `java_method_param` varchar(2000) COLLATE utf8mb4_unicode_ci DEFAULT '' COMMENT '请求参数（脱敏截断）',
+  `java_method_result` varchar(2000) COLLATE utf8mb4_unicode_ci DEFAULT '' COMMENT '返回结果（脱敏截断）',
+  `status` int DEFAULT '0' COMMENT '操作状态（0正常 1异常）',
+  `error_msg` varchar(2000) COLLATE utf8mb4_unicode_ci DEFAULT '' COMMENT '错误消息',
+  `start_time` datetime DEFAULT NULL COMMENT '操作开始时间',
+  `duration_ms` bigint DEFAULT '0' COMMENT '消耗时间（毫秒）',
+  `create_time` datetime DEFAULT NULL COMMENT '落库时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_sys_operate_log_tid` (`trace_id`),
+  KEY `idx_sys_operate_log_op` (`operator`),
+  KEY `idx_sys_operate_log_type` (`type`),
+  KEY `idx_sys_operate_log_status` (`status`),
+  KEY `idx_sys_operate_log_time` (`start_time`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='操作日志记录（YuKit @OperationLog）';
+
+-- ----------------------------
 -- Table structure for sys_post
 -- ----------------------------
 DROP TABLE IF EXISTS `sys_post`;

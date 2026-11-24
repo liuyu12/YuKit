@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>cn.lycoder.boot</groupId>
+        <artifactId>yukit-framework</artifactId>
+        <version>${revision}</version>
+    </parent>
+
+    <artifactId>yukit-spring-boot-starter-protection</artifactId>
+    <description>服务保障 Starter：基于 Redis + AOP 的幂等（@Idempotent）与限流（@RateLimiter）能力</description>
+
+    <dependencies>
+        <!-- 内部模块：Result / ServiceException / ErrorCode / OperatorSupplier -->
+        <dependency>
+            <groupId>cn.lycoder.boot</groupId>
+            <artifactId>yukit-common</artifactId>
+        </dependency>
+
+        <!-- Redis：幂等令牌与限流计数依赖 StringRedisTemplate（分布式语义） -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+
+        <!-- AOP：切面拦截注解（Boot4 无 starter-aop，直接依赖 aspectjweaver，版本由 BOM 托管） -->
+        <dependency>
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjweaver</artifactId>
+        </dependency>
+
+        <!-- Web：读取请求上下文（URI/IP）；spring-web 提供 RequestContextHolder，servlet-api 仅编译期需要 -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- 自动配置 + 配置元数据 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- 测试：JUnit5 + Mockito + AssertJ + spring-test(MockHttpServletRequest)，版本由 BOM 托管 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+</project>
