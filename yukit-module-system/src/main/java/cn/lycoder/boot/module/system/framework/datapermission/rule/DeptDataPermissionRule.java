@@ -7,6 +7,7 @@ import cn.lycoder.boot.module.system.dal.dataobject.user.SystemUserDO;
 import cn.lycoder.boot.module.system.dal.mapper.role.SystemRoleMapper;
 import cn.lycoder.boot.module.system.dal.mapper.user.SystemUserMapper;
 import cn.lycoder.boot.module.system.framework.datapermission.core.DataScopeType;
+import cn.lycoder.boot.module.system.framework.datapermission.core.DeptDataPermissionTableResolver;
 import cn.lycoder.boot.module.system.framework.datapermission.core.DeptDataScope;
 import cn.lycoder.boot.module.system.framework.security.StpInterfaceImpl;
 import cn.lycoder.boot.module.system.service.dept.DeptService;
@@ -18,7 +19,6 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -26,41 +26,31 @@ import java.util.stream.Collectors;
  * 部门数据权限规则：对受控表按其 {@code dept_id} 追加可见范围条件
  * <p>
  * 作为 {@link DataPermissionRule} 的业务实现注册到框架，由 MP {@code DataPermissionInterceptor} 逐表回调。
- * 受控表与过滤列见 {@link #DEPT_COLUMN_MAP}（{@code sys_user}/{@code sys_dept} 均按 {@code dept_id}）。
+ * 受控表及其部门过滤列不再集中硬编码，而是由实体上的 {@code @DeptDataPermission} 声明、
+ * {@link DeptDataPermissionTableResolver} 运行时扫描 MP 表元数据自动登记（新增受控表无需改动本类）。
  * <p>
  * 放行（返回 null，不改写）的情形：非受控表、无登录态（登录链/内部任务/定时任务等，避免误伤全局流程）、
- * 超级管理员、拥有「全部数据权限」角色。需要限制时：按可见部门生成 {@code alias.dept_id IN (...)}，
- * 拥有「仅本人」范围时并上 {@code alias.create_by = '<当前用户>'}，两者以并集（OR）组合；均无则恒假 {@code 1 = 0}。
+ * 超级管理员、拥有「全部数据权限」角色。需要限制时：按可见部门生成 {@code alias.<deptColumn> IN (...)}，
+ * 拥有「仅本人」范围时并上 {@code alias.<selfColumn> = '<当前用户>'}，两者以并集（OR）组合；均无则恒假 {@code 1 = 0}。
  * <p>
- * 列引用优先用表别名以避免连表歧义；部门 id 与 create_by（登录用户 id）均为数字串，无注入风险。
+ * 部门列与「仅本人」列由实体上的 {@code @DeptDataPermission} 声明（默认 {@code dept_id}/{@code create_by}），
+ * 列引用优先用表别名以避免连表歧义；部门 id 与本人列值（登录用户 id）均为数字串，无注入风险。
  */
 @Component
 @RequiredArgsConstructor
 public class DeptDataPermissionRule implements DataPermissionRule {
 
-    /**
-     * 受控表 -> 部门过滤列
-     */
-    private static final Map<String, String> DEPT_COLUMN_MAP = Map.of(
-            "sys_user", "dept_id",
-            "sys_dept", "dept_id"
-    );
-
     private static final String ALWAYS_FALSE = "1 = 0";
-
-    /**
-     * 「仅本人」过滤列：BaseEntity 审计字段 create_by（其值为登录用户 id 字符串）
-     */
-    private static final String SELF_COLUMN = "create_by";
 
     private final SystemRoleMapper roleMapper;
     private final SystemUserMapper userMapper;
     private final DeptService deptService;
+    private final DeptDataPermissionTableResolver tableResolver;
 
     @Override
     public Expression getExpression(String tableName, String tableAlias) {
-        String column = DEPT_COLUMN_MAP.get(normalizeTable(tableName));
-        if (column == null) {
+        DeptDataPermissionTableResolver.DeptColumns columns = tableResolver.findColumns(tableName);
+        if (columns == null) {
             return null;
         }
         Long userId = SecurityFrameworkUtils.getLoginUserId();
@@ -76,7 +66,7 @@ public class DeptDataPermissionRule implements DataPermissionRule {
         if (scope.isIgnoreAll()) {
             return null;
         }
-        return buildCondition(tableAlias, normalizeTable(tableName), column, userId, scope);
+        return buildCondition(tableAlias, normalizeTable(tableName), columns, userId, scope);
     }
 
     /**
@@ -84,15 +74,15 @@ public class DeptDataPermissionRule implements DataPermissionRule {
      * <p>
      * 多角色下，任一角色授予的部门范围或仅本人都会并入，OR 组合后整体括起，由 MP 追加到该表 WHERE。
      */
-    private Expression buildCondition(String tableAlias, String normalizedTable, String deptColumn, Long userId, DeptDataScope scope) {
+    private Expression buildCondition(String tableAlias, String normalizedTable, DeptDataPermissionTableResolver.DeptColumns columns, Long userId, DeptDataScope scope) {
         String aliasRef = isBlank(tableAlias) ? normalizedTable : tableAlias;
         List<String> parts = new ArrayList<>();
         if (!scope.getDeptIds().isEmpty()) {
             String in = scope.getDeptIds().stream().map(String::valueOf).collect(Collectors.joining(", "));
-            parts.add(aliasRef + "." + deptColumn + " IN (" + in + ")");
+            parts.add(aliasRef + "." + columns.deptColumn() + " IN (" + in + ")");
         }
         if (scope.isSelf()) {
-            parts.add(aliasRef + "." + SELF_COLUMN + " = '" + userId + "'");
+            parts.add(aliasRef + "." + columns.selfColumn() + " = '" + userId + "'");
         }
         if (parts.isEmpty()) {
             return parse(ALWAYS_FALSE);

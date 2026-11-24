@@ -1,5 +1,6 @@
 package cn.lycoder.boot.module.system.dal.dataobject.dept;
 
+import cn.lycoder.boot.framework.mybatis.datapermission.annotation.DeptDataPermission;
 import cn.lycoder.boot.framework.mybatis.pojo.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
@@ -16,6 +17,7 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @TableName("sys_dept")
+@DeptDataPermission
 public class SystemDeptDO extends BaseEntity {
 
     /**

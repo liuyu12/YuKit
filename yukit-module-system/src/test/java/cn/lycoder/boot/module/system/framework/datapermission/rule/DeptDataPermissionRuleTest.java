@@ -5,8 +5,10 @@ import cn.lycoder.boot.module.system.dal.dataobject.role.SystemRoleDO;
 import cn.lycoder.boot.module.system.dal.dataobject.user.SystemUserDO;
 import cn.lycoder.boot.module.system.dal.mapper.role.SystemRoleMapper;
 import cn.lycoder.boot.module.system.dal.mapper.user.SystemUserMapper;
+import cn.lycoder.boot.module.system.framework.datapermission.core.DeptDataPermissionTableResolver;
 import cn.lycoder.boot.module.system.service.dept.DeptService;
 import net.sf.jsqlparser.expression.Expression;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
@@ -29,9 +31,17 @@ class DeptDataPermissionRuleTest {
     private final SystemRoleMapper roleMapper = mock(SystemRoleMapper.class);
     private final SystemUserMapper userMapper = mock(SystemUserMapper.class);
     private final DeptService deptService = mock(DeptService.class);
+    private final DeptDataPermissionTableResolver tableResolver = mock(DeptDataPermissionTableResolver.class);
 
     private final DeptDataPermissionRule rule =
-            new DeptDataPermissionRule(roleMapper, userMapper, deptService);
+            new DeptDataPermissionRule(roleMapper, userMapper, deptService, tableResolver);
+
+    @BeforeEach
+    void setUp() {
+        // 受控表登记由 resolver 提供，单测中直接固定 sys_user/sys_dept 按 dept_id/create_by 受控；其余表默认返回 null
+        when(tableResolver.findColumns("sys_user")).thenReturn(new DeptDataPermissionTableResolver.DeptColumns("dept_id", "create_by"));
+        when(tableResolver.findColumns("sys_dept")).thenReturn(new DeptDataPermissionTableResolver.DeptColumns("dept_id", "create_by"));
+    }
 
     /** 在指定登录态下求值 sys_user 表（无别名） */
     private Expression evalUser(Long loginUserId) {

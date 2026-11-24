@@ -1,5 +1,6 @@
 package cn.lycoder.boot.module.system.dal.dataobject.user;
 
+import cn.lycoder.boot.framework.mybatis.datapermission.annotation.DeptDataPermission;
 import cn.lycoder.boot.framework.mybatis.pojo.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
@@ -15,6 +16,7 @@ import java.time.LocalDateTime;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @TableName("sys_user")
+@DeptDataPermission
 public class SystemUserDO extends BaseEntity {
 
     /**
