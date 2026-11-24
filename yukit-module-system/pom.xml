@@ -55,6 +55,11 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
+        <!-- OSHI：服务器监控（CPU/内存/磁盘/系统信息）跨平台采集 -->
+        <dependency>
+            <groupId>com.github.oshi</groupId>
+            <artifactId>oshi-core</artifactId>
+        </dependency>
         <!-- 测试：JUnit5 + Mockito（含静态 mock）+ AssertJ -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
