@@ -36,7 +36,7 @@ public class OnlineSessionController {
      */
     @Operation(summary = "查询在线会话列表")
     @GetMapping
-    @SaCheckPermission("system:online:query")
+    @SaCheckPermission("monitor:online:list")
     public Result<List<OnlineSessionRespVO>> getOnlineSessionList() {
         return Result.success(onlineSessionService.getOnlineSessionList());
     }
@@ -47,7 +47,7 @@ public class OnlineSessionController {
     @Operation(summary = "强制指定会话下线")
     @OperationLog(module = "在线会话", name = "强制会话下线", type = OperationType.FORCE)
     @DeleteMapping("/{tokenValue}")
-    @SaCheckPermission("system:online:force-logout")
+    @SaCheckPermission("monitor:online:forceLogout")
     public Result<Boolean> forceLogout(
             @Parameter(description = "会话令牌") @PathVariable("tokenValue") String tokenValue) {
         onlineSessionService.forceLogout(tokenValue);
@@ -60,7 +60,7 @@ public class OnlineSessionController {
     @Operation(summary = "强制某用户全部会话下线")
     @OperationLog(module = "在线会话", name = "强制用户下线", type = OperationType.FORCE)
     @DeleteMapping("/users/{userId}")
-    @SaCheckPermission("system:online:force-logout")
+    @SaCheckPermission("monitor:online:batchLogout")
     public Result<Boolean> forceLogoutByUserId(
             @Parameter(description = "用户ID") @PathVariable("userId") Long userId) {
         onlineSessionService.forceLogoutByUserId(userId);

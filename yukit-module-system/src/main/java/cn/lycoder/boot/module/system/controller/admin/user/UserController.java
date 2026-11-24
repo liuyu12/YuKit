@@ -84,7 +84,7 @@ public class UserController {
     @Operation(summary = "解锁用户登录")
     @OperationLog(module = "用户管理", name = "解锁用户登录", type = OperationType.UPDATE)
     @PutMapping("/{userId}/unlock")
-    @SaCheckPermission("system:user:update")
+    @SaCheckPermission("monitor:logininfor:unlock")
     public Result<Boolean> unlockUser(@Parameter(description = "用户ID") @PathVariable("userId") Long userId) {
         userService.unlockUser(userId);
         return Result.success(true);

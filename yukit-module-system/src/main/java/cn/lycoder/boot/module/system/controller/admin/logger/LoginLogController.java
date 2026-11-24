@@ -40,7 +40,7 @@ public class LoginLogController {
      */
     @Operation(summary = "分页查询登录日志")
     @GetMapping
-    @SaCheckPermission("system:login-log:query")
+    @SaCheckPermission("monitor:logininfor:query")
     public Result<PageResult<LoginLogRespVO>> getLoginLogPage(@Valid LoginLogPageReqVO reqVO) {
         PageResult<SystemLoginLogDO> pageResult = loginLogService.getLoginLogPage(reqVO);
         return Result.success(loginLogConvert.convertPage(pageResult));
@@ -51,7 +51,7 @@ public class LoginLogController {
      */
     @Operation(summary = "获取登录日志详情")
     @GetMapping("/{id}")
-    @SaCheckPermission("system:login-log:query")
+    @SaCheckPermission("monitor:logininfor:query")
     public Result<LoginLogRespVO> getLoginLog(@Parameter(description = "日志ID") @PathVariable("id") Long id) {
         SystemLoginLogDO loginLog = loginLogService.getLoginLog(id);
         return Result.success(loginLog == null ? null : loginLogConvert.convert(loginLog));
@@ -63,7 +63,7 @@ public class LoginLogController {
     @Operation(summary = "删除登录日志")
     @OperationLog(module = "登录日志", name = "删除登录日志", type = OperationType.DELETE)
     @DeleteMapping("/{id}")
-    @SaCheckPermission("system:login-log:delete")
+    @SaCheckPermission("monitor:logininfor:remove")
     public Result<Boolean> deleteLoginLog(@Parameter(description = "日志ID") @PathVariable("id") Long id) {
         loginLogService.deleteLoginLog(id);
         return Result.success(true);
