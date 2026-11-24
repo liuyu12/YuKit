@@ -59,4 +59,12 @@ public final class SystemErrorCodeConstants {
     public static final ErrorCode DEPT_PARENT_NOT_EXISTS = new ErrorCode(1002005003, "父部门不存在");
     public static final ErrorCode DEPT_PARENT_ERROR = new ErrorCode(1002005004, "不能设置自己为父部门");
     public static final ErrorCode DEPT_PARENT_IS_CHILD = new ErrorCode(1002005005, "不能设置自己的子部门为父部门");
+
+    // ========== 定时任务模块 1-002-006-xxx ==========
+
+    public static final ErrorCode JOB_NOT_EXISTS = new ErrorCode(1002006000, "定时任务不存在");
+    public static final ErrorCode JOB_NAME_GROUP_DUPLICATE = new ErrorCode(1002006001, "任务名称与任务组名组合已存在");
+    public static final ErrorCode JOB_INCORRECT_CRON_EXPRESSION = new ErrorCode(1002006002, "cron 表达式不合法");
+    public static final ErrorCode JOB_INVOKE_TARGET_INVALID = new ErrorCode(1002006003, "调用目标不合法或 Bean 方法未标注 @JobHandler");
+    public static final ErrorCode JOB_RUNNING_FORBID_CONCURRENT = new ErrorCode(1002006004, "任务禁止并发且正在执行中");
 }
