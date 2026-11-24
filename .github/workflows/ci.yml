@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  build:
+    name: Build & Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 与本地开发对齐：OpenJDK 21（本机为 Microsoft build，CI 用同名发行版）
+      - name: Setup JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: microsoft
+          java-version: '21'
+          cache: maven
+
+      # 单元测试全部为纯 Mockito（无 Spring 上下文、不依赖 MySQL/Redis），
+      # verify 同时完成全 reactor 编译与打包，任何模块编译/测试失败即红灯
+      - name: Build & Test
+        run: ./mvnw -B -ntp verify

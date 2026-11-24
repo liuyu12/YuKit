@@ -6,10 +6,11 @@ spring:
     # 本地开发默认 dev（彩色控制台 + SQL 日志），生产启动 --spring.profiles.active=prod
     active: dev
   datasource:
-    url: jdbc:mysql://localhost:3306/ry-vue?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
-    username: root
-    # 生产环境改为环境变量注入：${DB_PASSWORD}，禁止明文提交
-    password: root
+    # 库结构由 Flyway 自动初始化，新库开箱即用；默认库名 yukit，遗留 dev 库可用 MYSQL_DATABASE=ry-vue 覆盖回退
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:yukit}?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&createDatabaseIfNotExist=true
+    username: ${MYSQL_USERNAME:root}
+    # 默认值仅供本地开发；生产通过环境变量注入真实口令，禁止明文提交
+    password: ${MYSQL_PASSWORD:root}
     driver-class-name: com.mysql.cj.jdbc.Driver
     # HikariCP（Boot 默认池，已随 spring-boot-starter-jdbc 传递引入）
     hikari:
@@ -28,13 +29,24 @@ spring:
       leak-detection-threshold: 30000
       # 每个新连接建立后执行，会话时区双保险（与 URL 的 serverTimezone 叠加）
       connection-init-sql: SET time_zone = '+08:00'
+  # Flyway：启动期自动执行各模块 jar 内 db/migration/**.sql，并按版本记录于 flyway_schema_history
+  flyway:
+    enabled: true
+    # Flyway 11+ 原生支持跨 jar 扫描，不再接受 classpath*: 前缀（仅 classpath:/filesystem:）
+    locations: db/migration
+    # 禁用 flyway.clean，防误操作清库
+    clean-disabled: true
+    baseline-on-migrate: true
+    # 对“非空但无历史记录”的存量库（如 ry-vue）基线到 V2，不重跑建表/种子脚本；新空库不受影响
+    baseline-version: 2
+    baseline-description: baseline existing schema
   # Redis 主连接：业务缓存(@Cacheable) + 验证码等；Sa-Token 会话另走 alone 独立库（见下方 sa-token.alone-redis）
   data:
     redis:
-      host: localhost
-      port: 6379
-      # 生产同样改环境变量注入：${REDIS_PASSWORD}
-      password: 123456
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      # 默认值仅供本地开发，生产同样改环境变量注入：REDIS_PASSWORD
+      password: ${REDIS_PASSWORD:123456}
       # 业务库：与 Sa-Token 会话库(alone-redis.database)分开
       database: 0
       # 命令超时，比默认 2s 稍紧，快速失败

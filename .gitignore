@@ -5,6 +5,10 @@ logs/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+### flatten-maven-plugin 构建产物 ###
+.flattened-pom.xml
+**/.flattened-pom.xml
+
 ### STS ###
 .apt_generated
 .classpath

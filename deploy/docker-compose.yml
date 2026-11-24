@@ -1,0 +1,41 @@
+# YuKit 本地开发依赖：MySQL 8 + Redis
+# 用法：docker compose -f deploy/docker-compose.yml up -d
+# 口令与 application.yml 的 dev 默认值一致（可被 MYSQL_PASSWORD/REDIS_PASSWORD 环境变量覆盖）。
+# yukit 库无需手建：JDBC URL 带 createDatabaseIfNotExist=true，服务启动时 Flyway 自动建表 + 种子数据。
+# 本机已有 MySQL/Redis 时，本文件仅作演示，二选一即可（注意 3306/6379 端口占用）。
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: yukit-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - yukit-mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: yukit-redis
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--requirepass", "123456"]
+    volumes:
+      - yukit-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "123456", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  yukit-mysql-data:
+  yukit-redis-data:

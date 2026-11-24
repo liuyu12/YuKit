@@ -44,6 +44,16 @@
             <artifactId>mysql-connector-j</artifactId>
             <scope>runtime</scope>
         </dependency>
+        <!-- Flyway：Boot4 自动配置拆到专用 starter（单引 flyway-core 不会装配），启动时自动执行各模块 jar 内 db/migration 脚本 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-flyway</artifactId>
+        </dependency>
+        <!-- Flyway 10+ 数据库支持模块化，MySQL 方言在 flyway-mysql -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-mysql</artifactId>
+        </dependency>
         <!-- Sa-Token 会话持久化到 Redis（部署选择，与驱动同理放 server） -->
         <dependency>
             <groupId>cn.dev33</groupId>
