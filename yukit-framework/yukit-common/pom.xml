@@ -26,6 +26,20 @@
             <artifactId>jakarta.validation-api</artifactId>
         </dependency>
 
+        <!-- 自定义校验注解的 Validator 实现（InEnum/Mobile/InSet/InDict）需要编译期依赖；provided 不向下传递，运行期由下游 validation starter 提供 -->
+        <dependency>
+            <groupId>org.hibernate.validator</groupId>
+            <artifactId>hibernate-validator</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- InDictValidator 需 ObjectProvider/@Autowired 完成校验器的 Spring 字段注入；provided 不向下传递 -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-beans</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- Hutool 基础工具：全项目钦定的首选工具库（字符串/集合/日期/Bean 拷贝等） -->
         <!-- 只引所需子模块，版本由 BOM 管理；crypto/extra 等用到时在此追加 -->
         <dependency>

@@ -3,6 +3,7 @@ package cn.lycoder.boot.framework.web.handler;
 import cn.lycoder.boot.framework.common.enums.GlobalErrorCodeConstants;
 import cn.lycoder.boot.framework.common.exception.ServiceException;
 import cn.lycoder.boot.framework.common.pojo.Result;
+import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
@@ -63,6 +64,25 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BindException.class)
     public Result<Void> handleBindException(BindException e) {
         return buildBindExceptionResult(e.getBindingResult());
+    }
+
+    /**
+     * 方法参数直接标注的校验失败（类上 @Validated + @RequestParam/@PathVariable 单参数场景），
+     * 如 @GetMapping 方法里的 @Min(1) Integer id，不接住会误落入兜底的 500 分支
+     */
+    @ExceptionHandler(ConstraintViolationException.class)
+    public Result<Void> handleConstraintViolation(ConstraintViolationException e) {
+        String msg = e.getConstraintViolations().stream()
+                .findFirst()
+                .map(v -> {
+                    // 取字段名拼消息：path 形如 getUserById.id，末段是参数名
+                    String[] parts = v.getPropertyPath().toString().split("\\.");
+                    String field = parts.length > 0 ? parts[parts.length - 1] : "";
+                    return field.isEmpty() ? v.getMessage() : field + " " + v.getMessage();
+                })
+                .orElse(GlobalErrorCodeConstants.BAD_REQUEST.getMsg());
+        log.warn("[handleConstraintViolation] 参数校验失败：{}", msg);
+        return Result.error(GlobalErrorCodeConstants.BAD_REQUEST.getCode(), msg);
     }
 
     /**

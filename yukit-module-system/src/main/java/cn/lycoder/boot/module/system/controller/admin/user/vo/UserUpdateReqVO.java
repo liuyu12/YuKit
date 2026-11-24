@@ -1,9 +1,12 @@
 package cn.lycoder.boot.module.system.controller.admin.user.vo;
 
+import cn.lycoder.boot.framework.common.validation.InDict;
+import cn.lycoder.boot.framework.common.validation.InEnum;
+import cn.lycoder.boot.framework.common.validation.Mobile;
+import cn.lycoder.boot.module.system.enums.common.CommonStatusEnum;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -40,20 +43,22 @@ public class UserUpdateReqVO {
     /**
      * 手机号码
      */
-    @Pattern(regexp = "^$|^1[3-9]\\d{9}$", message = "手机号码格式不正确")
+    @Mobile(message = "手机号码格式不正确")
     @Schema(description = "手机号码", example = "13800138000")
     private String phonenumber;
 
     /**
-     * 用户性别（0男 1女 2未知）
+     * 用户性别（0男 1女 2未知），取值联动字典 sys_user_sex
      */
-    @Schema(description = "用户性别（0男 1女 2未知）", example = "0")
+    @InDict("sys_user_sex")
+    @Schema(description = "用户性别（0男 1女 2未知），取值联动字典 sys_user_sex", example = "0")
     private String sex;
 
     /**
      * 账号状态（0正常 1停用）
      */
     @NotBlank(message = "账号状态不能为空")
+    @InEnum(CommonStatusEnum.class)
     @Schema(description = "账号状态（0正常 1停用）", example = "0")
     private String status;
 

@@ -14,7 +14,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,6 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "用户管理")
 @RestController
 @RequestMapping("/system/users")
+@Validated // 激活方法参数直接标注的校验（@RequestParam/@PathVariable 单参数，抛 ConstraintViolationException）
 @RequiredArgsConstructor
 public class UserController {
 
@@ -79,7 +82,8 @@ public class UserController {
     @Operation(summary = "获取用户详情")
     @GetMapping("/{userId}")
     @SaCheckPermission("system:user:query")
-    public Result<UserRespVO> getUser(@Parameter(description = "用户ID") @PathVariable("userId") Long userId) {
+    public Result<UserRespVO> getUser(@Parameter(description = "用户ID") @PathVariable("userId")
+                                      @Positive(message = "用户ID必须为正整数") Long userId) {
         SystemUserDO user = userService.getUser(userId);
         return Result.success(user == null ? null : userConvert.convert(user));
     }
