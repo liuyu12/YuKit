@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.lycoder.boot.module.system.dal.mapper.menu.SystemMenuMapper">
+
+    <!-- 查询用户拥有的权限标识（perms），链路：用户 -> 角色 -> 菜单，供 Sa-Token StpInterface 使用 -->
+    <select id="selectPermissionStringsByUserId" resultType="java.lang.String">
+        select distinct m.perms
+        from sys_menu m
+        inner join sys_role_menu rm on m.menu_id = rm.menu_id
+        inner join sys_role r on r.role_id = rm.role_id
+        where m.status = '0' and r.status = '0' and r.del_flag = '0'
+          and m.perms is not null and m.perms != ''
+          and r.role_id in (select role_id from sys_user_role where user_id = #{userId})
+    </select>
+
+</mapper>

@@ -1,0 +1,114 @@
+server:
+  port: 8888
+
+spring:
+  profiles:
+    # 本地开发默认 dev（彩色控制台 + SQL 日志），生产启动 --spring.profiles.active=prod
+    active: dev
+  datasource:
+    url: jdbc:mysql://localhost:3306/ry-vue?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
+    username: root
+    # 生产环境改为环境变量注入：${DB_PASSWORD}，禁止明文提交
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    # HikariCP（Boot 默认池，已随 spring-boot-starter-jdbc 传递引入）
+    hikari:
+      pool-name: YukitHikariPool
+      # 最大连接数：宁小勿大，超过 DB 承载只会加剧锁等待，经验公式 核数×2+磁盘数
+      maximum-pool-size: 20
+      # 最小空闲：与 max 相等 = 固定池，避免流量突增时现建连接的延迟抖动
+      minimum-idle: 20
+      # 拿不到连接快速失败（默认 30s 太长，排队掩盖问题不如快速暴露）
+      connection-timeout: 5000
+      # 连接最大存活 15min，必须小于 MySQL wait_timeout（默认 8h），防死连接
+      max-lifetime: 900000
+      # 空闲连接回收时间，仅 min-idle < max 时有意义，固定池下几乎不触发
+      idle-timeout: 600000
+      # 借出超过 30s 未归还则打告警堆栈，排查连接泄漏利器（生产可关）
+      leak-detection-threshold: 30000
+      # 每个新连接建立后执行，会话时区双保险（与 URL 的 serverTimezone 叠加）
+      connection-init-sql: SET time_zone = '+08:00'
+  # Redis：Sa-Token 会话持久化（sa-token-redis-template 接管）
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      # 生产同样改环境变量注入：${REDIS_PASSWORD}
+      password: 123456
+      database: 1
+      # 命令超时，比默认 2s 稍紧，快速失败
+      timeout: 3000
+      lettuce:
+        pool:
+          max-active: 16
+          max-idle: 8
+          min-idle: 2
+          # 拿不到连接等待时长，设短避免雪崩式堆积
+          max-wait: 3000
+
+mybatis-plus:
+  # 扫描各模块 jar 内的 XML 映射文件（classpath* 星号不可省略）
+  mapper-locations: classpath*:/mapper/**/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+    # SQL 日志交给 Logback（StdOutImpl 绕过日志框架，无法控制级别/颜色/开关）；
+    # dev 下 Mapper 接口 DEBUG 级别即打印 SQL，见 logback-spring.xml
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+############## Sa-Token 配置 ##############
+sa-token:
+  # token 名称（同时也是 cookie 名称）
+  token-name: satoken
+  # token 有效期（单位：秒）默认 30 天，-1 代表永久有效
+  timeout: 2592000
+  # token 最低活跃频率（单位：秒），超时未访问则冻结，-1 代表不限制
+  active-timeout: -1
+  # 是否允许同一账号多地同时登录（true 允许，false 新登录挤掉旧登录）
+  is-concurrent: true
+  # 多人登录同一账号时是否共用一个 token（true 共用，false 每次新建）
+  is-share: false
+  # token 风格
+  token-style: uuid
+  # Redis key 统一前缀，多项目共用 Redis 时隔离命名空间
+  key-prefix: "yukit:satoken:"
+  # 会话存储已从内存切换到 Redis（sa-token-redis-template 自动装配 SaTokenDao），
+  # 重启不掉线、支持集群部署；未引入该插件时默认存进程内存
+
+############## 安全模块配置 ##############
+yukit:
+  security:
+    # 免登录白名单（默认已含 /error 与静态资源，此处追加业务接口）
+    exclude-paths:
+      - /system/auth/login
+      - /system/auth/captcha
+  captcha:
+    # 登录图形验证码总开关，开发/内网调试可置 false 跳过校验
+    enabled: true
+    # 验证码有效期（秒），答案存 Redis 到期自动失效
+    expire-seconds: 120
+    # 图片尺寸与字符数
+    width: 120
+    height: 40
+    code-count: 4
+    line-count: 20
+    # Redis key 前缀，多项目共用 Redis 时隔离命名空间
+    redis-key-prefix: "yukit:captcha:"
+  cache:
+    # 本地缓存总开关，false 则不装配 CacheManager（@Cacheable 失效）
+    enabled: true
+    # 默认规格：未单独声明的缓存名套用（最多 500 条、写入后 10 分钟过期）
+    spec: maximumSize=500,expireAfterWrite=10m
+    # 按缓存名差异化：key 与 @Cacheable(cacheNames=...) 对应
+    caches:
+      # 字典/配置类：变化少、TTL 长
+      dict: maximumSize=200,expireAfterWrite=1h
+      # 用户/权限类：适中
+      user: maximumSize=1000,expireAfterWrite=5m
+    # 是否记录命中率统计（排查期可开，生产建议关）
+    record-stats: false

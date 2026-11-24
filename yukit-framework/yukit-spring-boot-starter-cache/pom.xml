@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>cn.lycoder.boot</groupId>
+        <artifactId>yukit-framework</artifactId>
+        <version>${revision}</version>
+    </parent>
+
+    <artifactId>yukit-spring-boot-starter-cache</artifactId>
+    <description>缓存 Starter：基于 Spring Cache 抽象 + Caffeine 的本地缓存，支持按缓存名差异化配置</description>
+
+    <dependencies>
+        <!-- 内部模块：通用 POJO -->
+        <dependency>
+            <groupId>cn.lycoder.boot</groupId>
+            <artifactId>yukit-common</artifactId>
+        </dependency>
+
+        <!-- Spring Cache 抽象（提供 @Cacheable/CacheManager 等），非具体实现 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-cache</artifactId>
+        </dependency>
+
+        <!-- Caffeine：本地缓存实现，版本由 spring-boot-dependencies 托管 -->
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+        </dependency>
+
+        <!-- 自动配置元数据 + @ConfigurationProperties 支持 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+    </dependencies>
+
+</project>

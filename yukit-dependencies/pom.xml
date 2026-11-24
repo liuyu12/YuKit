@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>cn.lycoder.boot</groupId>
+    <artifactId>yukit-dependencies</artifactId>
+    <version>${revision}</version>
+    <packaging>pom</packaging>
+
+    <description>依赖管理模块</description>
+
+    <properties>
+        <revision>0.0.1-SNAPSHOT</revision>
+        <!-- 4.2.0 尚未 GA（当前仅 RC2），先用稳定版本 -->
+        <!-- TODO 安全债：4.1.3 托管的 logback 1.5.38 / tomcat 11.0.27 有 CVE，
+             升级 Boot 补丁版本时顺带处理，必要时在 BOM 中覆盖版本 -->
+        <spring-boot.version>4.1.3</spring-boot.version>
+        <mybatis-plus.version>3.5.17</mybatis-plus.version>
+        <sa-token.version>1.46.0</sa-token.version>
+        <mapstruct.version>1.6.3</mapstruct.version>
+        <lombok-mapstruct-binding.version>0.2.0</lombok-mapstruct-binding.version>
+        <hutool.version>5.8.36</hutool.version>
+        <!-- 33.8.0-jre 修复 CVE-2026-118042（HashBiMap/LinkedHashMultimap 哈希碰撞 DoS），旧版 33.4.8 受影响 -->
+        <guava.version>33.8.0-jre</guava.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- Spring Boot 依赖管理 -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!-- MyBatis-Plus BOM（统一管理 MP 所有模块版本） -->
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-bom</artifactId>
+                <version>${mybatis-plus.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- Sa-Token 权限认证（Spring Boot 4 专用 starter） -->
+            <dependency>
+                <groupId>cn.dev33</groupId>
+                <artifactId>sa-token-spring-boot4-starter</artifactId>
+                <version>${sa-token.version}</version>
+            </dependency>
+            <!-- Sa-Token 整合 Redis（Spring Data Redis / RedisTemplate 方案） -->
+            <dependency>
+                <groupId>cn.dev33</groupId>
+                <artifactId>sa-token-redis-template</artifactId>
+                <version>${sa-token.version}</version>
+            </dependency>
+
+            <!-- MapStruct -->
+            <dependency>
+                <groupId>org.mapstruct</groupId>
+                <artifactId>mapstruct</artifactId>
+                <version>${mapstruct.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mapstruct</groupId>
+                <artifactId>mapstruct-processor</artifactId>
+                <version>${mapstruct.version}</version>
+            </dependency>
+            <!-- Lombok 与 MapStruct 协同的桥接器 -->
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok-mapstruct-binding</artifactId>
+                <version>${lombok-mapstruct-binding.version}</version>
+            </dependency>
+
+            <!-- Hutool 基础工具（按需取用子模块，避免 hutool-all 全量传递） -->
+            <dependency>
+                <groupId>cn.hutool</groupId>
+                <artifactId>hutool-core</artifactId>
+                <version>${hutool.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.hutool</groupId>
+                <artifactId>hutool-crypto</artifactId>
+                <version>${hutool.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.hutool</groupId>
+                <artifactId>hutool-extra</artifactId>
+                <version>${hutool.version}</version>
+            </dependency>
+            <!-- 图形验证码（登录验证码用，仅 system 模块引入） -->
+            <dependency>
+                <groupId>cn.hutool</groupId>
+                <artifactId>hutool-captcha</artifactId>
+                <version>${hutool.version}</version>
+            </dependency>
+            <!-- Guava：只用于 RateLimiter/CacheBuilder 等 Hutool 无等价物的场景 -->
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${guava.version}</version>
+            </dependency>
+
+        </dependencies>
+    </dependencyManagement>
+
+</project>

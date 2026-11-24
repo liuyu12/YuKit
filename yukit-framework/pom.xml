@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>cn.lycoder.boot</groupId>
+        <artifactId>yukit</artifactId>
+        <version>${revision}</version>
+    </parent>
+
+    <artifactId>yukit-framework</artifactId>
+    <packaging>pom</packaging>
+
+    <description>系统框架</description>
+
+    <modules>
+        <module>yukit-common</module>
+        <module>yukit-spring-boot-starter-web</module>
+        <module>yukit-spring-boot-starter-mybatis</module>
+        <module>yukit-spring-boot-starter-security</module>
+        <module>yukit-spring-boot-starter-cache</module>
+    </modules>
+
+</project>

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Logback 配置（文件名必须为 logback-spring.xml 才能使用 <springProfile> 等 Spring 扩展）
+
+    设计说明：
+    1. 控制台彩色依赖 Logback 原生转换器：%highlight 按级别着色、%cyan/%magenta/%faint 修饰字段，
+       不依赖 Spring 私有类，IDEA / iTerm 直接生效
+    2. 文件日志不分色（ANSI 码写进文件会变乱码），按 天+大小 滚动
+    3. dev：仅控制台，业务包 DEBUG；prod：仅文件，INFO 与 ERROR 分文件，无缓冲全量落盘
+-->
+<configuration>
+
+    <property name="APP_NAME" value="yukit"/>
+    <property name="LOG_HOME" value="${user.home}/logs/${APP_NAME}"/>
+    <!-- 文件日志统一格式：时间 [线程] 级别 logger - 消息 -->
+    <property name="FILE_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"/>
+
+    <!-- 本地开发 / 默认：彩色控制台，业务包 DEBUG（含 MyBatis SQL） -->
+    <springProfile name="dev | default">
+        <!-- 控制台：彩色 -->
+        <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder>
+                <!--
+                    %highlight：ERROR红 WARN黄 INFO绿 DEBUG/TRACE青
+                    %15.15thread：线程名定宽 15 列，横向对齐方便扫读
+                    注意：%faint 等个别颜色字不是 Logback 标准转换词，跨版本不可用
+                -->
+                <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) %magenta([%15.15thread]) %cyan(%-40.40logger{39}) : %msg%n</pattern>
+                <charset>UTF-8</charset>
+            </encoder>
+        </appender>
+
+        <logger name="cn.lycoder.boot" level="DEBUG"/>
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+
+    <springProfile name="prod">
+        <!-- ========== 文件：全量 INFO ========== -->
+        <appender name="FILE_INFO" class="ch.qos.logback.core.rolling.RollingFileAppender">
+            <file>${LOG_HOME}/${APP_NAME}-info.log</file>
+            <encoder>
+                <pattern>${FILE_PATTERN}</pattern>
+                <charset>UTF-8</charset>
+            </encoder>
+            <!-- 过滤策略：INFO/WARN 收录，ERROR 单独走 FILE_ERROR，避免重复 -->
+            <filter class="ch.qos.logback.classic.filter.LevelFilter">
+                <level>ERROR</level>
+                <onMatch>DENY</onMatch>
+                <onMismatch>ACCEPT</onMismatch>
+            </filter>
+            <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+                <fileNamePattern>${LOG_HOME}/archive/${APP_NAME}-info.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+                <maxFileSize>100MB</maxFileSize>
+                <maxHistory>30</maxHistory>
+                <totalSizeCap>3GB</totalSizeCap>
+            </rollingPolicy>
+        </appender>
+
+        <!-- ========== 文件：仅 ERROR，告警/排障专用 ========== -->
+        <appender name="FILE_ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
+            <file>${LOG_HOME}/${APP_NAME}-error.log</file>
+            <encoder>
+                <pattern>${FILE_PATTERN}</pattern>
+                <charset>UTF-8</charset>
+            </encoder>
+            <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+                <level>ERROR</level>
+            </filter>
+            <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+                <fileNamePattern>${LOG_HOME}/archive/${APP_NAME}-error.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+                <maxFileSize>100MB</maxFileSize>
+                <maxHistory>90</maxHistory>
+                <totalSizeCap>2GB</totalSizeCap>
+            </rollingPolicy>
+        </appender>
+
+        <!-- 生产：只落文件，ERROR 双写便于告警采集 -->
+        <root level="INFO">
+            <appender-ref ref="FILE_INFO"/>
+            <appender-ref ref="FILE_ERROR"/>
+        </root>
+    </springProfile>
+
+</configuration>

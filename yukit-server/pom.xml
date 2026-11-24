@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>cn.lycoder.boot</groupId>
+        <artifactId>yukit</artifactId>
+        <version>${revision}</version>
+    </parent>
+
+    <artifactId>yukit-server</artifactId>
+
+    <description>服务模块</description>
+    <dependencies>
+        <!-- Web -->
+        <dependency>
+            <groupId>cn.lycoder.boot</groupId>
+            <artifactId>yukit-spring-boot-starter-web</artifactId>
+        </dependency>
+        <!-- MyBatis -->
+        <dependency>
+            <groupId>cn.lycoder.boot</groupId>
+            <artifactId>yukit-spring-boot-starter-mybatis</artifactId>
+        </dependency>
+        <!-- 安全框架 Sa-Token -->
+        <dependency>
+            <groupId>cn.lycoder.boot</groupId>
+            <artifactId>yukit-spring-boot-starter-security</artifactId>
+        </dependency>
+        <!-- 本地缓存 Caffeine（Spring Cache 抽象） -->
+        <dependency>
+            <groupId>cn.lycoder.boot</groupId>
+            <artifactId>yukit-spring-boot-starter-cache</artifactId>
+        </dependency>
+        <!-- 系统模块 -->
+        <dependency>
+            <groupId>cn.lycoder.boot</groupId>
+            <artifactId>yukit-module-system</artifactId>
+        </dependency>
+        <!-- MySQL 驱动 -->
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <!-- Sa-Token 会话持久化到 Redis（部署选择，与驱动同理放 server） -->
+        <dependency>
+            <groupId>cn.dev33</groupId>
+            <artifactId>sa-token-redis-template</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+        <!-- Lettuce 连接池依赖 -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-pool2</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

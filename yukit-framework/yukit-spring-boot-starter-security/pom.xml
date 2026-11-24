@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>cn.lycoder.boot</groupId>
+        <artifactId>yukit-framework</artifactId>
+        <version>${revision}</version>
+    </parent>
+
+    <artifactId>yukit-spring-boot-starter-security</artifactId>
+    <description>安全框架 Starter：基于 Sa-Token 的登录鉴权、权限校验、操作人上下文</description>
+
+    <dependencies>
+        <!-- 内部模块：OperatorSupplier SPI、Result 等 -->
+        <dependency>
+            <groupId>cn.lycoder.boot</groupId>
+            <artifactId>yukit-common</artifactId>
+        </dependency>
+
+        <!-- Sa-Token (Spring Boot 4) -->
+        <dependency>
+            <groupId>cn.dev33</groupId>
+            <artifactId>sa-token-spring-boot4-starter</artifactId>
+        </dependency>
+
+        <!-- Web MVC：拦截器注册、异常处理器需要 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- Spring Boot 自动配置元数据 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
+        </dependency>
+    </dependencies>
+
+</project>

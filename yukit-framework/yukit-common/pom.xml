@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>cn.lycoder.boot</groupId>
+        <artifactId>yukit-framework</artifactId>
+        <version>${revision}</version>
+    </parent>
+
+    <artifactId>yukit-common</artifactId>
+
+    <description>通用工具模块：统一响应、错误码、基础 POJO</description>
+
+    <dependencies>
+        <!-- Result 上的 @JsonIgnore -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+        </dependency>
+
+        <!-- PageParam 上的 @NotNull/@Min/@Max（仅注解 API，无实现依赖） -->
+        <dependency>
+            <groupId>jakarta.validation</groupId>
+            <artifactId>jakarta.validation-api</artifactId>
+        </dependency>
+
+        <!-- Hutool 基础工具：全项目钦定的首选工具库（字符串/集合/日期/Bean 拷贝等） -->
+        <!-- 只引所需子模块，版本由 BOM 管理；crypto/extra 等用到时在此追加 -->
+        <dependency>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-core</artifactId>
+        </dependency>
+        <!-- Guava：仅限 Hutool 无等价物的场景（RateLimiter/CacheBuilder/EventBus） -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+        </dependency>
+
+    </dependencies>
+</project>

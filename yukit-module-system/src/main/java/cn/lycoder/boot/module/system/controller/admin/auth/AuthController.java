@@ -1,0 +1,58 @@
+package cn.lycoder.boot.module.system.controller.admin.auth;
+
+import cn.lycoder.boot.framework.common.pojo.Result;
+import cn.lycoder.boot.module.system.controller.admin.auth.vo.AuthCaptchaRespVO;
+import cn.lycoder.boot.module.system.controller.admin.auth.vo.AuthLoginReqVO;
+import cn.lycoder.boot.module.system.controller.admin.auth.vo.AuthLoginRespVO;
+import cn.lycoder.boot.module.system.service.auth.AuthService;
+import cn.lycoder.boot.module.system.service.captcha.CaptchaService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * 管理后台 - 认证
+ */
+@RestController
+@RequestMapping("/system/auth")
+@RequiredArgsConstructor
+public class AuthController {
+
+    private final AuthService authService;
+    private final CaptchaService captchaService;
+
+    /**
+     * 获取登录图形验证码
+     * <p>
+     * 该路径已配置在免登录白名单 yukit.security.exclude-paths 中
+     */
+    @GetMapping("/captcha")
+    public Result<AuthCaptchaRespVO> captcha() {
+        return Result.success(captchaService.generate());
+    }
+
+    /**
+     * 账号密码登录
+     * <p>
+     * 该路径已配置在免登录白名单 yukit.security.exclude-paths 中
+     */
+    @PostMapping("/login")
+    public Result<AuthLoginRespVO> login(@RequestBody @Valid AuthLoginReqVO reqVO,
+                                         HttpServletRequest request) {
+        return Result.success(authService.login(reqVO, request));
+    }
+
+    /**
+     * 退出登录
+     */
+    @PostMapping("/logout")
+    public Result<Boolean> logout() {
+        authService.logout();
+        return Result.success(true);
+    }
+}
