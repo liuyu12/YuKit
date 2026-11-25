@@ -37,6 +37,11 @@ import static cn.lycoder.boot.module.system.enums.SystemErrorCodeConstants.USER_
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
+    /**
+     * 代理头未透传真实 IP 时的占位值（Nginx 等对未知来源常填字面量 unknown）
+     */
+    private static final String UNKNOWN = "unknown";
+
     private final SystemUserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final CaptchaService captchaService;
@@ -180,16 +185,16 @@ public class AuthServiceImpl implements AuthService {
      */
     private String getClientIp(HttpServletRequest request) {
         String ip = request.getHeader("X-Forwarded-For");
-        if (ip != null && !ip.isBlank() && !"unknown".equalsIgnoreCase(ip)) {
+        if (ip != null && !ip.isBlank() && !UNKNOWN.equalsIgnoreCase(ip)) {
             // 多级代理时取第一个非 unknown 的 IP
             for (String candidate : ip.split(",")) {
-                if (!"unknown".equalsIgnoreCase(candidate.trim())) {
+                if (!UNKNOWN.equalsIgnoreCase(candidate.trim())) {
                     return candidate.trim();
                 }
             }
         }
         ip = request.getHeader("X-Real-IP");
-        if (ip != null && !ip.isBlank() && !"unknown".equalsIgnoreCase(ip)) {
+        if (ip != null && !ip.isBlank() && !UNKNOWN.equalsIgnoreCase(ip)) {
             return ip;
         }
         return request.getRemoteAddr();
