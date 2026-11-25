@@ -5,6 +5,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 用户信息 Response VO
@@ -85,4 +86,10 @@ public class UserRespVO implements Serializable {
      */
     @Schema(description = "创建时间", example = "2026-01-01 12:00:00")
     private LocalDateTime createTime;
+
+    /**
+     * 关联岗位ID集合（仅详情接口回填，列表查询为 null）
+     */
+    @Schema(description = "关联岗位ID集合（仅详情回填）", example = "[1,2]")
+    private List<Long> postIds;
 }

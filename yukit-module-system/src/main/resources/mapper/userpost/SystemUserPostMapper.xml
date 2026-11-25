@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.lycoder.boot.module.system.dal.mapper.userpost.SystemUserPostMapper">
+
+    <!-- 删除某用户的全部岗位关联 -->
+    <delete id="deleteByUserId">
+        delete from sys_user_post where user_id = #{userId}
+    </delete>
+
+    <!-- 批量插入用户岗位关联 -->
+    <insert id="insertBatch">
+        insert into sys_user_post (user_id, post_id) values
+        <foreach collection="postIds" item="postId" separator=",">
+            (#{userId}, #{postId})
+        </foreach>
+    </insert>
+
+    <!-- 查询某用户已关联的岗位ID集合 -->
+    <select id="selectPostIdsByUserId" resultType="java.lang.Long">
+        select post_id from sys_user_post where user_id = #{userId}
+    </select>
+
+    <!-- 统计岗位被未删除用户的引用数：JOIN sys_user 且 del_flag='0'（逻辑删除用户不占用岗位） -->
+    <select id="countActiveByPostId" resultType="java.lang.Long">
+        select count(*)
+        from sys_user_post up
+        join sys_user u on u.user_id = up.user_id
+        where up.post_id = #{postId} and u.del_flag = '0'
+    </select>
+
+</mapper>

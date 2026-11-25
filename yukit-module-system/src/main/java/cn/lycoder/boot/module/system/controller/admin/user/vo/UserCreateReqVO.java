@@ -11,6 +11,8 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+import java.util.List;
+
 /**
  * 用户创建 Request VO
  */
@@ -77,4 +79,10 @@ public class UserCreateReqVO {
     @Size(max = 500, message = "备注长度不能超过500个字符")
     @Schema(description = "备注", example = "初始管理员账号")
     private String remark;
+
+    /**
+     * 关联岗位ID集合（表单多选，null/空表示不分配任何岗位）
+     */
+    @Schema(description = "关联岗位ID集合（多选）", example = "[1,2]")
+    private List<Long> postIds;
 }

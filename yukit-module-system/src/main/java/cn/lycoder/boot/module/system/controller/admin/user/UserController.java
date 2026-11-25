@@ -115,7 +115,13 @@ public class UserController {
     public Result<UserRespVO> getUser(@Parameter(description = "用户ID") @PathVariable("userId")
                                       @Positive(message = "用户ID必须为正整数") Long userId) {
         SystemUserDO user = userService.getUser(userId);
-        return Result.success(user == null ? null : userConvert.convert(user));
+        if (user == null) {
+            return Result.success(null);
+        }
+        UserRespVO respVO = userConvert.convert(user);
+        // 详情回填关联岗位ID，供前端表单多选回显（列表查询不回填）
+        respVO.setPostIds(userService.getUserPostIds(userId));
+        return Result.success(respVO);
     }
 
     /**

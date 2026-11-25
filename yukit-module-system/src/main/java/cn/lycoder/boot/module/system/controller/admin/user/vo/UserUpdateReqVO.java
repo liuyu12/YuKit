@@ -10,6 +10,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+import java.util.List;
+
 /**
  * 用户更新 Request VO
  * <p>
@@ -68,4 +70,10 @@ public class UserUpdateReqVO {
     @Size(max = 500, message = "备注长度不能超过500个字符")
     @Schema(description = "备注", example = "日常维护中")
     private String remark;
+
+    /**
+     * 关联岗位ID集合（表单多选，全量覆盖：null/空表示清空该用户全部岗位）
+     */
+    @Schema(description = "关联岗位ID集合（多选，全量覆盖）", example = "[1,2]")
+    private List<Long> postIds;
 }

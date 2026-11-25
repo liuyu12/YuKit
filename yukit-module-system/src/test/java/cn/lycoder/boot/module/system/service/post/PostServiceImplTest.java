@@ -6,6 +6,7 @@ import cn.lycoder.boot.module.system.controller.admin.post.vo.PostUpdateReqVO;
 import cn.lycoder.boot.module.system.convert.post.PostConvertImpl;
 import cn.lycoder.boot.module.system.dal.dataobject.post.SystemPostDO;
 import cn.lycoder.boot.module.system.dal.mapper.post.SystemPostMapper;
+import cn.lycoder.boot.module.system.dal.mapper.userpost.SystemUserPostMapper;
 import cn.lycoder.boot.module.system.enums.SystemErrorCodeConstants;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,12 +36,14 @@ class PostServiceImplTest {
 
     @Mock
     private SystemPostMapper postMapper;
+    @Mock
+    private SystemUserPostMapper userPostMapper;
 
     private PostServiceImpl postService;
 
     @BeforeEach
     void setUp() {
-        postService = new PostServiceImpl(postMapper, new PostConvertImpl());
+        postService = new PostServiceImpl(postMapper, new PostConvertImpl(), userPostMapper);
     }
 
     private PostCreateReqVO buildCreateReq(String code, String name) {
@@ -159,5 +162,29 @@ class PostServiceImplTest {
         assertThatThrownBy(() -> postService.deletePost(99L))
                 .isInstanceOf(ServiceException.class);
         verify(postMapper, never()).deleteById(99L);
+    }
+
+    @Test
+    @DisplayName("删除：岗位被活动用户引用则拒绝（POST_IN_USE）")
+    void deleteShouldRejectWhenInUse() {
+        when(postMapper.selectById(2L)).thenReturn(new SystemPostDO());
+        when(userPostMapper.countActiveByPostId(2L)).thenReturn(1L);
+
+        assertThatThrownBy(() -> postService.deletePost(2L))
+                .isInstanceOf(ServiceException.class)
+                .extracting(e -> ((ServiceException) e).getCode())
+                .isEqualTo(SystemErrorCodeConstants.POST_IN_USE.getCode());
+        verify(postMapper, never()).deleteById(2L);
+    }
+
+    @Test
+    @DisplayName("删除：无活动用户引用则删除成功")
+    void deleteShouldSucceedWhenNotInUse() {
+        when(postMapper.selectById(5L)).thenReturn(new SystemPostDO());
+        when(userPostMapper.countActiveByPostId(5L)).thenReturn(0L);
+
+        postService.deletePost(5L);
+
+        verify(postMapper).deleteById(5L);
     }
 }

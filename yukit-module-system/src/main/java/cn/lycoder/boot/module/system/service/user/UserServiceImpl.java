@@ -8,8 +8,11 @@ import cn.lycoder.boot.module.system.controller.admin.user.vo.UserCreateReqVO;
 import cn.lycoder.boot.module.system.controller.admin.user.vo.UserPageReqVO;
 import cn.lycoder.boot.module.system.controller.admin.user.vo.UserUpdateReqVO;
 import cn.lycoder.boot.module.system.convert.user.UserConvert;
+import cn.lycoder.boot.module.system.dal.dataobject.post.SystemPostDO;
 import cn.lycoder.boot.module.system.dal.dataobject.user.SystemUserDO;
+import cn.lycoder.boot.module.system.dal.mapper.post.SystemPostMapper;
 import cn.lycoder.boot.module.system.dal.mapper.user.SystemUserMapper;
+import cn.lycoder.boot.module.system.dal.mapper.userpost.SystemUserPostMapper;
 import cn.lycoder.boot.module.system.service.auth.LoginAttemptService;
 import cn.lycoder.boot.module.system.service.config.ConfigService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -19,8 +22,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import java.util.List;
+import java.util.Objects;
+
+import static cn.lycoder.boot.module.system.enums.SystemErrorCodeConstants.POST_NOT_EXISTS;
 import static cn.lycoder.boot.module.system.enums.SystemErrorCodeConstants.USER_NAME_EXISTS;
 import static cn.lycoder.boot.module.system.enums.SystemErrorCodeConstants.USER_NOT_EXISTS;
 
@@ -46,41 +55,56 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final LoginAttemptService loginAttemptService;
     private final ConfigService configService;
+    private final SystemUserPostMapper userPostMapper;
+    private final SystemPostMapper postMapper;
 
     @Override
     @IgnoreDataPermission
+    @Transactional(rollbackFor = Exception.class)
     public Long createUser(UserCreateReqVO reqVO) {
         // 账号唯一性校验须跨全表进行，不受当前用户可见部门限制，故忽略数据权限
         // 1. 校验账号唯一
         validateUserNameUnique(reqVO.getUserName(), null);
-        // 2. ReqVO → DO（MapStruct），密码单独加密
+        // 2. 校验所选岗位均存在（防前端伪造/脏 ID 落库）
+        validatePostsExist(reqVO.getPostIds());
+        // 3. ReqVO → DO（MapStruct），密码单独加密
         SystemUserDO user = userConvert.convert(reqVO);
         user.setPassword(passwordEncoder.encode(reqVO.getPassword()));
         user.setUserType("00");
         user.setStatus(StringUtils.hasText(reqVO.getStatus())
                 ? reqVO.getStatus() : SystemUserDO.STATUS_ENABLE);
-        // 3. 插入，createBy/createTime 由 MetaObjectHandler 自动填充
+        // 4. 插入，createBy/createTime 由 MetaObjectHandler 自动填充
         userMapper.insert(user);
+        // 5. 保存用户-岗位关联（多对多，全量覆盖）
+        saveUserPosts(user.getUserId(), reqVO.getPostIds());
         return user.getUserId();
     }
 
     @Override
     @IgnoreDataPermission
+    @Transactional(rollbackFor = Exception.class)
     public void updateUser(UserUpdateReqVO reqVO) {
         // 1. 校验用户存在
         validateUserExists(reqVO.getUserId());
-        // 2. ReqVO → DO，password 不在更新 VO 中，避免误改
+        // 2. 校验所选岗位均存在
+        validatePostsExist(reqVO.getPostIds());
+        // 3. ReqVO → DO，password 不在更新 VO 中，避免误改
         SystemUserDO updateObj = userConvert.convert(reqVO);
         // updateBy/updateTime 由 MetaObjectHandler 自动填充
         userMapper.updateById(updateObj);
+        // 4. 全量覆盖用户-岗位关联
+        saveUserPosts(reqVO.getUserId(), reqVO.getPostIds());
     }
 
     @Override
     @IgnoreDataPermission
+    @Transactional(rollbackFor = Exception.class)
     public void deleteUser(Long userId) {
         validateUserExists(userId);
         // @TableLogic 生效，实际执行 UPDATE del_flag='2'
         userMapper.deleteById(userId);
+        // 物理清除岗位关联，避免逻辑删除的用户长期占用岗位（影响删岗引用校验）
+        userPostMapper.deleteByUserId(userId);
     }
 
     @Override
@@ -178,6 +202,41 @@ public class UserServiceImpl implements UserService {
                 .ne(excludeUserId != null, SystemUserDO::getUserId, excludeUserId));
         if (count != null && count > 0) {
             throw new ServiceException(USER_NAME_EXISTS);
+        }
+    }
+
+    @Override
+    @IgnoreDataPermission
+    public List<Long> getUserPostIds(Long userId) {
+        return userPostMapper.selectPostIdsByUserId(userId);
+    }
+
+    /**
+     * 全量覆盖用户-岗位关联：先清空该用户全部关联，再按最新选择批量插入。
+     * postIds 为空表示清空（用户可不属于任何岗位）。
+     */
+    private void saveUserPosts(Long userId, List<Long> postIds) {
+        userPostMapper.deleteByUserId(userId);
+        if (!CollectionUtils.isEmpty(postIds)) {
+            userPostMapper.insertBatch(userId, postIds);
+        }
+    }
+
+    /**
+     * 校验所选岗位全部存在（防前端伪造/脏 ID 落库），空选择直接跳过。
+     * 去重后比对命中数，任一无效 ID 即拒绝整笔操作。
+     */
+    private void validatePostsExist(List<Long> postIds) {
+        if (CollectionUtils.isEmpty(postIds)) {
+            return;
+        }
+        List<Long> distinctIds = postIds.stream().filter(Objects::nonNull).distinct().toList();
+        if (distinctIds.isEmpty()) {
+            return;
+        }
+        List<SystemPostDO> existPosts = postMapper.selectBatchIds(distinctIds);
+        if (existPosts == null || existPosts.size() < distinctIds.size()) {
+            throw new ServiceException(POST_NOT_EXISTS);
         }
     }
 }

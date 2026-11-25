@@ -2,9 +2,14 @@ package cn.lycoder.boot.module.system.service.user;
 
 import cn.lycoder.boot.framework.common.exception.ServiceException;
 import cn.lycoder.boot.module.system.controller.admin.auth.vo.UserProfileUpdateReqVO;
+import cn.lycoder.boot.module.system.controller.admin.user.vo.UserCreateReqVO;
+import cn.lycoder.boot.module.system.controller.admin.user.vo.UserUpdateReqVO;
 import cn.lycoder.boot.module.system.convert.user.UserConvertImpl;
+import cn.lycoder.boot.module.system.dal.dataobject.post.SystemPostDO;
 import cn.lycoder.boot.module.system.dal.dataobject.user.SystemUserDO;
+import cn.lycoder.boot.module.system.dal.mapper.post.SystemPostMapper;
 import cn.lycoder.boot.module.system.dal.mapper.user.SystemUserMapper;
+import cn.lycoder.boot.module.system.dal.mapper.userpost.SystemUserPostMapper;
 import cn.lycoder.boot.module.system.enums.SystemErrorCodeConstants;
 import cn.lycoder.boot.module.system.service.auth.LoginAttemptService;
 import cn.lycoder.boot.module.system.service.config.ConfigService;
@@ -16,10 +21,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.Arrays;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -43,13 +51,17 @@ class UserServiceImplTest {
     private LoginAttemptService loginAttemptService;
     @Mock
     private ConfigService configService;
+    @Mock
+    private SystemUserPostMapper userPostMapper;
+    @Mock
+    private SystemPostMapper postMapper;
 
     private UserServiceImpl userService;
 
     @BeforeEach
     void setUp() {
         userService = new UserServiceImpl(userMapper, new UserConvertImpl(),
-                passwordEncoder, loginAttemptService, configService);
+                passwordEncoder, loginAttemptService, configService, userPostMapper, postMapper);
     }
 
     @Test
@@ -196,5 +208,89 @@ class UserServiceImplTest {
         user.setUserName(userName);
         user.setPassword("$2a$old");
         return user;
+    }
+
+    @Test
+    void createUserShouldSavePostLinksWhenPostsExist() {
+        UserCreateReqVO reqVO = new UserCreateReqVO();
+        reqVO.setUserName("newbie");
+        reqVO.setPassword("pass123");
+        reqVO.setPostIds(Arrays.asList(1L, 2L));
+        when(userMapper.selectCount(any())).thenReturn(0L);
+        when(postMapper.selectBatchIds(any())).thenReturn(Arrays.asList(new SystemPostDO(), new SystemPostDO()));
+        when(passwordEncoder.encode("pass123")).thenReturn("$2a$new");
+        when(userMapper.insert(any(SystemUserDO.class))).thenAnswer(inv -> {
+            inv.getArgument(0, SystemUserDO.class).setUserId(10L);
+            return 1;
+        });
+
+        Long userId = userService.createUser(reqVO);
+
+        assertThat(userId).isEqualTo(10L);
+        verify(userPostMapper).deleteByUserId(10L);
+        verify(userPostMapper).insertBatch(10L, Arrays.asList(1L, 2L));
+    }
+
+    @Test
+    void createUserShouldRejectWhenPostIdNotExists() {
+        UserCreateReqVO reqVO = new UserCreateReqVO();
+        reqVO.setUserName("newbie");
+        reqVO.setPassword("pass123");
+        reqVO.setPostIds(Arrays.asList(1L, 99L));
+        when(userMapper.selectCount(any())).thenReturn(0L);
+        // 仅 1 个岗位命中，小于去重后的 2 个 → 视为脏 ID
+        when(postMapper.selectBatchIds(any())).thenReturn(Arrays.asList(new SystemPostDO()));
+
+        assertThatThrownBy(() -> userService.createUser(reqVO))
+                .isInstanceOf(ServiceException.class)
+                .extracting(e -> ((ServiceException) e).getCode())
+                .isEqualTo(SystemErrorCodeConstants.POST_NOT_EXISTS.getCode());
+        verify(userMapper, never()).insert(any(SystemUserDO.class));
+        verify(userPostMapper, never()).insertBatch(any(), any());
+    }
+
+    @Test
+    void createUserShouldNotTouchPostLinkWhenNoPosts() {
+        UserCreateReqVO reqVO = new UserCreateReqVO();
+        reqVO.setUserName("solo");
+        reqVO.setPassword("pass123");
+        when(userMapper.selectCount(any())).thenReturn(0L);
+        when(passwordEncoder.encode("pass123")).thenReturn("$2a$s");
+        when(userMapper.insert(any(SystemUserDO.class))).thenAnswer(inv -> {
+            inv.getArgument(0, SystemUserDO.class).setUserId(11L);
+            return 1;
+        });
+
+        userService.createUser(reqVO);
+
+        // postIds 为空：validatePostsExist 短路不查岗位，saveUserPosts 只清不插
+        verify(postMapper, never()).selectBatchIds(any());
+        verify(userPostMapper).deleteByUserId(11L);
+        verify(userPostMapper, never()).insertBatch(any(), any());
+    }
+
+    @Test
+    void updateUserShouldOverwritePostLinks() {
+        UserUpdateReqVO reqVO = new UserUpdateReqVO();
+        reqVO.setUserId(30L);
+        reqVO.setPostIds(Arrays.asList(3L));
+        when(userMapper.selectById(30L)).thenReturn(buildUser(30L, "editor"));
+        when(postMapper.selectBatchIds(any())).thenReturn(Arrays.asList(new SystemPostDO()));
+
+        userService.updateUser(reqVO);
+
+        verify(userMapper).updateById(any(SystemUserDO.class));
+        verify(userPostMapper).deleteByUserId(30L);
+        verify(userPostMapper).insertBatch(30L, Arrays.asList(3L));
+    }
+
+    @Test
+    void deleteUserShouldPhysicallyClearPostLinks() {
+        when(userMapper.selectById(20L)).thenReturn(buildUser(20L, "ghost"));
+
+        userService.deleteUser(20L);
+
+        verify(userMapper).deleteById(20L);
+        verify(userPostMapper).deleteByUserId(20L);
     }
 }

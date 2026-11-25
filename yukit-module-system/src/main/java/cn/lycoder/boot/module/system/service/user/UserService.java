@@ -7,6 +7,8 @@ import cn.lycoder.boot.module.system.controller.admin.user.vo.UserPageReqVO;
 import cn.lycoder.boot.module.system.controller.admin.user.vo.UserUpdateReqVO;
 import cn.lycoder.boot.module.system.dal.dataobject.user.SystemUserDO;
 
+import java.util.List;
+
 /**
  * 用户管理 Service 接口
  */
@@ -67,4 +69,9 @@ public interface UserService {
      * 分页查询用户
      */
     PageResult<SystemUserDO> getUserPage(UserPageReqVO reqVO);
+
+    /**
+     * 查询指定用户已关联的岗位ID集合（用户详情回填）
+     */
+    List<Long> getUserPostIds(Long userId);
 }

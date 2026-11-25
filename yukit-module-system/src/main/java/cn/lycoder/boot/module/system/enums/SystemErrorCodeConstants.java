@@ -94,4 +94,5 @@ public final class SystemErrorCodeConstants {
     public static final ErrorCode POST_NOT_EXISTS = new ErrorCode(1002010000, "岗位不存在");
     public static final ErrorCode POST_CODE_DUPLICATE = new ErrorCode(1002010001, "岗位编码已存在");
     public static final ErrorCode POST_NAME_DUPLICATE = new ErrorCode(1002010002, "岗位名称已存在");
+    public static final ErrorCode POST_IN_USE = new ErrorCode(1002010003, "岗位已分配给用户，无法删除");
 }

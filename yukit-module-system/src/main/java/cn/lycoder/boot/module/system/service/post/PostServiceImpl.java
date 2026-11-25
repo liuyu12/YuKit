@@ -8,6 +8,7 @@ import cn.lycoder.boot.module.system.controller.admin.post.vo.PostUpdateReqVO;
 import cn.lycoder.boot.module.system.convert.post.PostConvert;
 import cn.lycoder.boot.module.system.dal.dataobject.post.SystemPostDO;
 import cn.lycoder.boot.module.system.dal.mapper.post.SystemPostMapper;
+import cn.lycoder.boot.module.system.dal.mapper.userpost.SystemUserPostMapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -19,6 +20,7 @@ import org.springframework.util.StringUtils;
 import java.util.List;
 
 import static cn.lycoder.boot.module.system.enums.SystemErrorCodeConstants.POST_CODE_DUPLICATE;
+import static cn.lycoder.boot.module.system.enums.SystemErrorCodeConstants.POST_IN_USE;
 import static cn.lycoder.boot.module.system.enums.SystemErrorCodeConstants.POST_NAME_DUPLICATE;
 import static cn.lycoder.boot.module.system.enums.SystemErrorCodeConstants.POST_NOT_EXISTS;
 
@@ -34,6 +36,7 @@ public class PostServiceImpl implements PostService {
 
     private final SystemPostMapper postMapper;
     private final PostConvert postConvert;
+    private final SystemUserPostMapper userPostMapper;
 
     @Override
     public Long createPost(PostCreateReqVO reqVO) {
@@ -56,6 +59,10 @@ public class PostServiceImpl implements PostService {
     @Override
     public void deletePost(Long postId) {
         validatePostExists(postId);
+        // 引用校验：岗位仍被未删除用户使用时拒绝删除（逻辑删除的用户不计入，不长期占用）
+        if (userPostMapper.countActiveByPostId(postId) > 0) {
+            throw new ServiceException(POST_IN_USE);
+        }
         postMapper.deleteById(postId);
     }
 
