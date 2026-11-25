@@ -10,6 +10,7 @@ import cn.lycoder.boot.module.system.convert.user.UserConvert;
 import cn.lycoder.boot.module.system.dal.dataobject.user.SystemUserDO;
 import cn.lycoder.boot.module.system.dal.mapper.user.SystemUserMapper;
 import cn.lycoder.boot.module.system.service.auth.LoginAttemptService;
+import cn.lycoder.boot.module.system.service.config.ConfigService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -30,10 +31,20 @@ import static cn.lycoder.boot.module.system.enums.SystemErrorCodeConstants.USER_
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
+    /**
+     * 重置密码默认值来源参数（参数管理可运行期维护）
+     */
+    private static final String CONFIG_KEY_INIT_PASSWORD = "sys.user.initPassword";
+    /**
+     * 参数缺失/空值时的兜底初始密码，与 V6 种子默认值一致
+     */
+    private static final String FALLBACK_INIT_PASSWORD = "123456";
+
     private final SystemUserMapper userMapper;
     private final UserConvert userConvert;
     private final PasswordEncoder passwordEncoder;
     private final LoginAttemptService loginAttemptService;
+    private final ConfigService configService;
 
     @Override
     @IgnoreDataPermission
@@ -76,6 +87,25 @@ public class UserServiceImpl implements UserService {
     public void unlockUser(Long userId) {
         // 解锁以用户名为维度清除 Redis 失败计数，先确保用户存在
         SystemUserDO user = validateUserExists(userId);
+        loginAttemptService.reset(user.getUserName());
+    }
+
+    @Override
+    @IgnoreDataPermission
+    public void resetPassword(Long userId, String rawPassword) {
+        SystemUserDO user = validateUserExists(userId);
+        // 未指定则读系统参数（走 config 缓存，参数管理改值即时生效）；参数缺失再兜底内置默认
+        String password = StringUtils.hasText(rawPassword)
+                ? rawPassword : configService.getConfigValue(CONFIG_KEY_INIT_PASSWORD);
+        if (!StringUtils.hasText(password)) {
+            password = FALLBACK_INIT_PASSWORD;
+        }
+        // 只更新密码列（null 字段 updateById 自动跳过），updateBy/updateTime 由 MetaObjectHandler 填充
+        SystemUserDO updateObj = new SystemUserDO();
+        updateObj.setUserId(userId);
+        updateObj.setPassword(passwordEncoder.encode(password));
+        userMapper.updateById(updateObj);
+        // 凭证已变更，顺带清除失败计数解除锁定，用户可立即以新密码登录
         loginAttemptService.reset(user.getUserName());
     }
 

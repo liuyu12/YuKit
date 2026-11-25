@@ -34,6 +34,15 @@ public interface UserService {
     void unlockUser(Long userId);
 
     /**
+     * 重置用户密码：指定则用新密码，留空取系统参数 sys.user.initPassword；
+     * 同步清除登录失败计数，让用户可立即以新密码登录
+     *
+     * @param userId      用户ID
+     * @param rawPassword 新密码明文，可为空
+     */
+    void resetPassword(Long userId, String rawPassword);
+
+    /**
      * 获取用户，不存在抛异常
      */
     SystemUserDO getUser(Long userId);

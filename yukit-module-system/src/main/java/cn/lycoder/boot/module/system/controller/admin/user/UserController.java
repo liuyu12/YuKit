@@ -6,6 +6,7 @@ import cn.lycoder.boot.framework.common.pojo.PageResult;
 import cn.lycoder.boot.framework.common.pojo.Result;
 import cn.lycoder.boot.module.system.controller.admin.user.vo.UserCreateReqVO;
 import cn.lycoder.boot.module.system.controller.admin.user.vo.UserPageReqVO;
+import cn.lycoder.boot.module.system.controller.admin.user.vo.UserResetPasswordReqVO;
 import cn.lycoder.boot.module.system.controller.admin.user.vo.UserRespVO;
 import cn.lycoder.boot.module.system.controller.admin.user.vo.UserUpdateReqVO;
 import cn.lycoder.boot.module.system.convert.user.UserConvert;
@@ -87,6 +88,21 @@ public class UserController {
     @SaCheckPermission("monitor:logininfor:unlock")
     public Result<Boolean> unlockUser(@Parameter(description = "用户ID") @PathVariable("userId") Long userId) {
         userService.unlockUser(userId);
+        return Result.success(true);
+    }
+
+    /**
+     * 重置用户密码（留空取系统参数 sys.user.initPassword）
+     * <p>
+     * 权限码沿用 V2 种子 system:user:edit（RuoYi 惯例：重置密码归用户编辑）
+     */
+    @Operation(summary = "重置用户密码")
+    @OperationLog(module = "用户管理", name = "重置用户密码", type = OperationType.UPDATE)
+    @PutMapping("/{userId}/reset-password")
+    @SaCheckPermission("system:user:edit")
+    public Result<Boolean> resetPassword(@Parameter(description = "用户ID") @PathVariable("userId") Long userId,
+                                         @RequestBody @Valid UserResetPasswordReqVO reqVO) {
+        userService.resetPassword(userId, reqVO.getPassword());
         return Result.success(true);
     }
 
