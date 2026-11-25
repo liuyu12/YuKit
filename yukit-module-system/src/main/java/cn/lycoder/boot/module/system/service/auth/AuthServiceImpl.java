@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 
 import static cn.lycoder.boot.module.system.enums.SystemErrorCodeConstants.AUTH_LOGIN_ACCOUNT_LOCKED;
@@ -36,6 +37,10 @@ public class AuthServiceImpl implements AuthService {
     private final CaptchaService captchaService;
     private final LoginAttemptService loginAttemptService;
     private final LoginLogService loginLogService;
+    /**
+     * 全局时间源（yukit.zone-id 配置），避免无参 now() 随 JVM 默认时区漂移
+     */
+    private final Clock clock;
 
     @Override
     public AuthLoginRespVO login(AuthLoginReqVO reqVO, HttpServletRequest request) {
@@ -109,7 +114,7 @@ public class AuthServiceImpl implements AuthService {
         StpUtil.getTokenSession()
                 .set(OnlineSessionService.ATTR_LOGIN_IP, clientIp)
                 .set(OnlineSessionService.ATTR_USER_AGENT, userAgent)
-                .set(OnlineSessionService.ATTR_LOGIN_TIME, System.currentTimeMillis());
+                .set(OnlineSessionService.ATTR_LOGIN_TIME, clock.millis());
     }
 
     /**
@@ -119,7 +124,7 @@ public class AuthServiceImpl implements AuthService {
         SystemUserDO updateObj = new SystemUserDO();
         updateObj.setUserId(userId);
         updateObj.setLoginIp(clientIp);
-        updateObj.setLoginDate(LocalDateTime.now());
+        updateObj.setLoginDate(LocalDateTime.now(clock));
         userMapper.updateById(updateObj);
     }
 

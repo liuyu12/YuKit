@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.Collection;
 
@@ -32,6 +33,10 @@ public class JobLogServiceImpl implements JobLogService {
     private static final int MAX_MESSAGE_LENGTH = 500;
 
     private final SystemJobLogMapper jobLogMapper;
+    /**
+     * 全局时间源（yukit.zone-id 配置）
+     */
+    private final Clock clock;
 
     @Override
     public PageResult<SystemJobLogDO> getJobLogPage(JobLogPageReqVO reqVO) {
@@ -56,7 +61,7 @@ public class JobLogServiceImpl implements JobLogService {
     @Override
     public void createJobLog(SystemJobLogDO jobLog) {
         if (jobLog.getCreateTime() == null) {
-            jobLog.setCreateTime(LocalDateTime.now());
+            jobLog.setCreateTime(LocalDateTime.now(clock));
         }
         truncateLongFields(jobLog);
         jobLogMapper.insert(jobLog);

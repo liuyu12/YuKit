@@ -11,6 +11,7 @@ import org.springframework.util.ReflectionUtils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.concurrent.ConcurrentHashMap;
@@ -45,6 +46,10 @@ public class JobRunner implements Runnable {
      * 跨调度周期共享的并发标志位（按 jobId 维度）
      */
     private final ConcurrentHashMap<Long, AtomicBoolean> runningFlags;
+    /**
+     * 全局时间源，由 JobScheduler 从容器透传（yukit.zone-id 配置）
+     */
+    private final Clock clock;
 
     @Override
     public void run() {
@@ -54,7 +59,7 @@ public class JobRunner implements Runnable {
             recordSkipped();
             return;
         }
-        LocalDateTime start = LocalDateTime.now();
+        LocalDateTime start = LocalDateTime.now(clock);
         long startNanos = System.nanoTime();
         try {
             invoke();
@@ -173,7 +178,7 @@ public class JobRunner implements Runnable {
     }
 
     private void recordSkipped() {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(clock);
         SystemJobLogDO record = new SystemJobLogDO();
         record.setJobId(job.getJobId());
         record.setJobName(job.getJobName());

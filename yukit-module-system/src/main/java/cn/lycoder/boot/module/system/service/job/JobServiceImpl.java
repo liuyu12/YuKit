@@ -25,6 +25,7 @@ import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.lang.reflect.Method;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -48,6 +49,10 @@ public class JobServiceImpl implements JobService {
     private final SystemJobMapper jobMapper;
     private final JobScheduler jobScheduler;
     private final ApplicationContext applicationContext;
+    /**
+     * 全局时间源（yukit.zone-id 配置）
+     */
+    private final Clock clock;
 
     @Override
     public Long createJob(JobCreateReqVO reqVO) {
@@ -140,7 +145,7 @@ public class JobServiceImpl implements JobService {
             return null;
         }
         try {
-            return CronExpression.parse(cronExpression).next(LocalDateTime.now());
+            return CronExpression.parse(cronExpression).next(LocalDateTime.now(clock));
         } catch (IllegalArgumentException e) {
             return null;
         }

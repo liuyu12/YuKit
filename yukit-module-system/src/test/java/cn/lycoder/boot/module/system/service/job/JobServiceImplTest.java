@@ -11,6 +11,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.ApplicationContext;
 
+import java.time.Clock;
+import java.time.ZoneId;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -38,7 +40,8 @@ class JobServiceImplTest {
         jobMapper = mock(SystemJobMapper.class);
         jobScheduler = mock(JobScheduler.class);
         applicationContext = mock(ApplicationContext.class);
-        service = new JobServiceImpl(jobMapper, jobScheduler, applicationContext);
+        service = new JobServiceImpl(jobMapper, jobScheduler, applicationContext,
+                Clock.system(ZoneId.of("Asia/Shanghai")));
     }
 
     /** 提供合法 invoke_target 校验用的目标 Bean */

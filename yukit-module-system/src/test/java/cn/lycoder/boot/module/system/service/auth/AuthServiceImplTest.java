@@ -18,6 +18,9 @@ import org.mockito.MockedStatic;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.Clock;
+import java.time.ZoneId;
+
 import static cn.lycoder.boot.module.system.enums.SystemErrorCodeConstants.AUTH_LOGIN_ACCOUNT_LOCKED;
 import static cn.lycoder.boot.module.system.enums.SystemErrorCodeConstants.AUTH_LOGIN_BAD_CREDENTIALS;
 import static cn.lycoder.boot.module.system.enums.SystemErrorCodeConstants.AUTH_LOGIN_USER_DISABLED;
@@ -38,6 +41,11 @@ import static org.mockito.Mockito.when;
  */
 class AuthServiceImplTest {
 
+    /**
+     * 与全局 Clock Bean 同构的测试时钟（yukit.zone-id 默认值）
+     */
+    private static final Clock TEST_CLOCK = Clock.system(ZoneId.of("Asia/Shanghai"));
+
     private SystemUserMapper userMapper;
     private PasswordEncoder passwordEncoder;
     private CaptchaService captchaService;
@@ -54,7 +62,7 @@ class AuthServiceImplTest {
         loginAttemptService = mock(LoginAttemptService.class);
         loginLogService = mock(LoginLogService.class);
         authService = new AuthServiceImpl(userMapper, passwordEncoder, captchaService,
-                loginAttemptService, loginLogService);
+                loginAttemptService, loginLogService, TEST_CLOCK);
         request = new MockHttpServletRequest();
         request.setRemoteAddr("10.0.0.1");
     }

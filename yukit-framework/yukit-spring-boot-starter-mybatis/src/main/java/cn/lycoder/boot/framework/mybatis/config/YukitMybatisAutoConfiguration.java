@@ -16,6 +16,8 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 
+import java.time.Clock;
+
 /**
  * MyBatis-Plus 自动配置
  */
@@ -66,13 +68,18 @@ public class YukitMybatisAutoConfiguration {
     /**
      * 字段自动填充处理器
      * <p>
-     * 如果容器中存在 {@link OperatorSupplier} Bean（由安全模块提供），则自动注入；
-     * 否则回退为 "system"。
+     * 如果容器中存在 {@link OperatorSupplier} Bean（由安全模块提供），则自动注入；否则回退为 "system"。
+     * 时间源优先复用全局 {@link Clock} Bean（yukit.zone-id 统一配置），
+     * 独立使用本 starter 时回退为处理器内置默认。
      */
     @Bean
     @ConditionalOnMissingBean(MetaObjectHandler.class)
-    public MetaObjectHandler metaObjectHandler(ObjectProvider<OperatorSupplier> operatorSupplierProvider) {
+    public MetaObjectHandler metaObjectHandler(ObjectProvider<OperatorSupplier> operatorSupplierProvider,
+            ObjectProvider<Clock> clockProvider) {
         OperatorSupplier supplier = operatorSupplierProvider.getIfAvailable(OperatorSupplier::system);
-        return new DefaultMetaObjectHandler(supplier);
+        Clock clock = clockProvider.getIfAvailable();
+        return clock != null
+                ? new DefaultMetaObjectHandler(clock, supplier)
+                : new DefaultMetaObjectHandler(supplier);
     }
 }

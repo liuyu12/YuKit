@@ -1,9 +1,11 @@
 package cn.lycoder.boot.module.system.job;
 
 import cn.lycoder.boot.module.system.framework.job.annotation.JobHandler;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 
 /**
@@ -13,14 +15,20 @@ import java.time.LocalDateTime;
  */
 @Slf4j
 @Component("sampleHeartbeatTask")
+@RequiredArgsConstructor
 public class SampleHeartbeatTask {
+
+    /**
+     * 全局时间源（yukit.zone-id 配置）
+     */
+    private final Clock clock;
 
     /**
      * 无参心跳
      */
     @JobHandler("演示任务：打印心跳日志")
     public void beat() {
-        log.info("[SampleHeartbeatTask] beat at {}", LocalDateTime.now());
+        log.info("[SampleHeartbeatTask] beat at {}", LocalDateTime.now(clock));
     }
 
     /**

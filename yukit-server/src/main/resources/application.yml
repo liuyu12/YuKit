@@ -143,6 +143,9 @@ sa-token:
 
 ############## 安全模块配置 ##############
 yukit:
+  # 全局业务时区（YukitClockAutoConfiguration 据此装配 Clock Bean）：
+  # 自动填充/文件分目录等取时间处统一注入 Clock，不再各处手写 ZoneId；与数据源 serverTimezone 保持一致
+  zone-id: Asia/Shanghai
   # 接口访问日志：每请求输出一行摘要（traceId/方法/路径/状态/业务code/耗时/IP/用户/UA）
   access-log:
     # 总开关，false 则不装配访问日志过滤器

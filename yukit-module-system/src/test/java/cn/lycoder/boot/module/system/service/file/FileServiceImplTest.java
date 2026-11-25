@@ -18,7 +18,9 @@ import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.Clock;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.regex.Pattern;
 
@@ -42,6 +44,10 @@ class FileServiceImplTest {
      */
     private static final String HELLO_SHA256 = "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824";
     private static final Pattern STORED_NAME_PATTERN = Pattern.compile("[0-9a-f]{32}\\.png");
+    /**
+     * 与全局 Clock Bean 同构的测试时钟，钉死业务时区避免 CI 跨天抖动
+     */
+    private static final Clock TEST_CLOCK = Clock.system(ZoneId.of("Asia/Shanghai"));
 
     @Mock
     private SystemFileMapper fileMapper;
@@ -52,7 +58,7 @@ class FileServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        fileService = new FileServiceImpl(fileMapper, fileStorage, new FileProperties());
+        fileService = new FileServiceImpl(fileMapper, fileStorage, new FileProperties(), TEST_CLOCK);
     }
 
     @Test
@@ -65,7 +71,8 @@ class FileServiceImplTest {
 
         ArgumentCaptor<String> pathCaptor = ArgumentCaptor.forClass(String.class);
         verify(fileStorage).store(pathCaptor.capture(), eq("hello".getBytes(StandardCharsets.UTF_8)));
-        String expectedDir = DateTimeFormatter.ofPattern("yyyy/MM/dd").format(LocalDate.now()) + "/";
+        String expectedDir = DateTimeFormatter.ofPattern("yyyy/MM/dd")
+                .format(LocalDate.now(TEST_CLOCK)) + "/";
         assertThat(pathCaptor.getValue()).startsWith(expectedDir);
         assertThat(pathCaptor.getValue().substring(expectedDir.length())).matches(STORED_NAME_PATTERN);
 

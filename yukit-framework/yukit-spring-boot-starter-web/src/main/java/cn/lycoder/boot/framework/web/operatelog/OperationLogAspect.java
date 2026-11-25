@@ -18,6 +18,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import tools.jackson.databind.ObjectMapper;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -58,6 +59,10 @@ public class OperationLogAspect {
     private final ObjectProvider<OperationLogRecorder> recorderProvider;
     private final ObjectProvider<OperatorSupplier> operatorSupplierProvider;
     private final ObjectProvider<ObjectMapper> objectMapperProvider;
+    /**
+     * 全局时间源（YukitClockAutoConfiguration 装配，yukit.zone-id 配置）
+     */
+    private final Clock clock;
 
     @Around("@annotation(operationLog)")
     public Object around(ProceedingJoinPoint joinPoint, OperationLog operationLog) throws Throwable {
@@ -67,7 +72,7 @@ public class OperationLogAspect {
             return joinPoint.proceed();
         }
 
-        LocalDateTime startTime = LocalDateTime.now();
+        LocalDateTime startTime = LocalDateTime.now(clock);
         long startNanos = System.nanoTime();
         Object result = null;
         Throwable error = null;

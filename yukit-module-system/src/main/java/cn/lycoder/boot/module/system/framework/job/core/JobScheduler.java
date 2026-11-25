@@ -10,6 +10,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Component;
 
+import java.time.Clock;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -31,6 +32,10 @@ public class JobScheduler {
     private final ThreadPoolTaskScheduler jobTaskScheduler;
     private final ApplicationContext applicationContext;
     private final JobLogService jobLogService;
+    /**
+     * 全局时间源（yukit.zone-id 配置），透传给 JobRunner 保证日志时间口径一致
+     */
+    private final Clock clock;
 
     /**
      * jobId → 调度 future
@@ -52,7 +57,7 @@ public class JobScheduler {
         }
         try {
             CronTrigger trigger = new CronTrigger(job.getCronExpression());
-            JobRunner runner = new JobRunner(job, applicationContext, jobLogService, runningFlags);
+            JobRunner runner = new JobRunner(job, applicationContext, jobLogService, runningFlags, clock);
             ScheduledFuture<?> future = jobTaskScheduler.schedule(runner, trigger);
             if (future != null) {
                 futures.put(job.getJobId(), future);
@@ -84,7 +89,7 @@ public class JobScheduler {
      * 立即异步执行一次，不影响下次 cron 触发时间
      */
     public void runOnce(SystemJobDO job) {
-        JobRunner runner = new JobRunner(job, applicationContext, jobLogService, runningFlags);
+        JobRunner runner = new JobRunner(job, applicationContext, jobLogService, runningFlags, clock);
         jobTaskScheduler.execute(runner);
     }
 

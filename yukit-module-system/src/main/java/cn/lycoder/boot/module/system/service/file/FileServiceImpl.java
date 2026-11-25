@@ -20,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -43,6 +44,11 @@ public class FileServiceImpl implements FileService {
      */
     private static final DateTimeFormatter DATE_DIR_FORMATTER = DateTimeFormatter.ofPattern("yyyy/MM/dd");
     /**
+     * 存储逻辑路径分隔符：跨平台统一正斜杠（入库 biz_path 同格式，
+     * Java NIO 在 Windows 上也接受 /），不用 File.separator 以免存量路径随系统变化
+     */
+    private static final String PATH_SEPARATOR = "/";
+    /**
      * 原始文件名入库最大长度（对齐列宽 varchar(255)）
      */
     private static final int MAX_ORIGINAL_NAME_LENGTH = 255;
@@ -58,6 +64,11 @@ public class FileServiceImpl implements FileService {
     private final SystemFileMapper fileMapper;
     private final FileStorage fileStorage;
     private final FileProperties fileProperties;
+    /**
+     * 全局时间源（YukitClockAutoConfiguration 装配，yukit.zone-id 统一配置），
+     * 避免手写 ZoneId 或使用无参 now() 随 JVM 默认时区漂移
+     */
+    private final Clock clock;
 
     @Override
     public SystemFileDO createFile(MultipartFile file) {
@@ -75,7 +86,7 @@ public class FileServiceImpl implements FileService {
 
         String storedName = UUID.randomUUID().toString().replace("-", "")
                 + (extension == null ? "" : "." + extension.toLowerCase(Locale.ROOT));
-        String relativePath = DATE_DIR_FORMATTER.format(LocalDate.now()) + "/" + storedName;
+        String relativePath = DATE_DIR_FORMATTER.format(LocalDate.now(clock)) + PATH_SEPARATOR + storedName;
         storeWithWrapper(relativePath, content);
 
         SystemFileDO fileDO = new SystemFileDO();
@@ -86,7 +97,7 @@ public class FileServiceImpl implements FileService {
         fileDO.setMimeType(truncate(file.getContentType(), MAX_MIME_TYPE_LENGTH));
         fileDO.setFileSize((long) content.length);
         fileDO.setFileHash(sha256Hex(content));
-        fileDO.setCreateTime(LocalDateTime.now());
+        fileDO.setCreateTime(LocalDateTime.now(clock));
         fileMapper.insert(fileDO);
         return fileDO;
     }

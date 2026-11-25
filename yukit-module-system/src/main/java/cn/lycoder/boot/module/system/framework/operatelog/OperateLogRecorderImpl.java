@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Component;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 
 /**
@@ -24,6 +25,10 @@ import java.time.LocalDateTime;
 public class OperateLogRecorderImpl implements OperationLogRecorder {
 
     private final SystemOperateLogMapper operateLogMapper;
+    /**
+     * 全局时间源（yukit.zone-id 配置）
+     */
+    private final Clock clock;
 
     @Override
     public void record(OperationLogRecord record) {
@@ -33,7 +38,7 @@ public class OperateLogRecorderImpl implements OperationLogRecorder {
         try {
             SystemOperateLogDO logDO = new SystemOperateLogDO();
             BeanUtils.copyProperties(record, logDO);
-            logDO.setCreateTime(LocalDateTime.now());
+            logDO.setCreateTime(LocalDateTime.now(clock));
             operateLogMapper.insert(logDO);
         } catch (Exception e) {
             log.warn("操作日志落库失败: {}", e.getMessage());

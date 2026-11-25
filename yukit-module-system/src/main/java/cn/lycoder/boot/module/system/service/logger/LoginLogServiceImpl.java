@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 
 /**
@@ -28,6 +29,10 @@ public class LoginLogServiceImpl implements LoginLogService {
     private static final int MAX_USER_AGENT_LENGTH = 512;
 
     private final SystemLoginLogMapper loginLogMapper;
+    /**
+     * 全局时间源（yukit.zone-id 配置）
+     */
+    private final Clock clock;
 
     @Override
     public void createLoginLog(Long userId, String username, LoginResultTypeEnum result,
@@ -39,7 +44,7 @@ public class LoginLogServiceImpl implements LoginLogService {
         log.setMsg(truncate(msg, MAX_MSG_LENGTH));
         log.setUserIp(truncate(userIp, MAX_IP_LENGTH));
         log.setUserAgent(truncate(userAgent, MAX_USER_AGENT_LENGTH));
-        log.setCreateTime(LocalDateTime.now());
+        log.setCreateTime(LocalDateTime.now(clock));
         loginLogMapper.insert(log);
     }
 
