@@ -1,6 +1,8 @@
 HELP.md
 target/
 logs/
+# 本地文件存储根目录（yukit.file.local.base-path 默认值），运行时产物不入库
+/data/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/

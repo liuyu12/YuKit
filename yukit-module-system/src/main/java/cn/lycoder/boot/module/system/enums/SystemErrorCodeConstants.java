@@ -67,4 +67,11 @@ public final class SystemErrorCodeConstants {
     public static final ErrorCode JOB_INCORRECT_CRON_EXPRESSION = new ErrorCode(1002006002, "cron 表达式不合法");
     public static final ErrorCode JOB_INVOKE_TARGET_INVALID = new ErrorCode(1002006003, "调用目标不合法或 Bean 方法未标注 @JobHandler");
     public static final ErrorCode JOB_RUNNING_FORBID_CONCURRENT = new ErrorCode(1002006004, "任务禁止并发且正在执行中");
+
+    // ========== 文件管理模块 1-002-007-xxx ==========
+
+    public static final ErrorCode FILE_NOT_EXISTS = new ErrorCode(1002007000, "文件不存在");
+    public static final ErrorCode FILE_TYPE_FORBIDDEN = new ErrorCode(1002007001, "不允许上传该类型的文件");
+    public static final ErrorCode FILE_STORAGE_FAILED = new ErrorCode(1002007002, "文件存储操作失败");
+    public static final ErrorCode FILE_EMPTY = new ErrorCode(1002007003, "上传文件不能为空");
 }

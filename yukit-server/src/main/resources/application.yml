@@ -5,6 +5,12 @@ spring:
   profiles:
     # 本地开发默认 dev（彩色控制台 + SQL 日志），生产启动 --spring.profiles.active=prod
     active: dev
+  servlet:
+    multipart:
+      # 单文件上限（Boot 默认 1MB 偏小）；超限由框架拒收，业务侧无需重复校验
+      max-file-size: 10MB
+      # 单次请求总上限（预留表单字段与其他开销余量）
+      max-request-size: 20MB
   datasource:
     # 库结构由 Flyway 自动初始化，新库开箱即用；默认库名 yukit，遗留 dev 库可用 MYSQL_DATABASE=ry-vue 覆盖回退
     url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:yukit}?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&createDatabaseIfNotExist=true
@@ -191,6 +197,14 @@ yukit:
     window-seconds: 600
     # Redis 失败计数 key 前缀
     fail-key-prefix: "yukit:login:fail:"
+  file:
+    # 存储类型：local 本地磁盘（默认），后续可扩展对象存储
+    storage-type: local
+    # 禁止上传的扩展名黑名单（小写比对）；未配置时用内置默认（可执行/脚本类）
+    # forbidden-extensions: [jsp, jspx, exe, bat, sh]
+    local:
+      # 存储根目录（相对进程工作目录）；生产建议挂独立数据盘，备份/容量均监控此目录
+      base-path: ./data/file-storage
   cache:
     # 本地缓存总开关，false 则不装配 CacheManager（@Cacheable 失效）
     enabled: true
