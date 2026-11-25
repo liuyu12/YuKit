@@ -131,6 +131,35 @@ class FileServiceImplTest {
     }
 
     @Test
+    void previewableContentShouldAllowImage() throws IOException {
+        SystemFileDO fileDO = new SystemFileDO();
+        fileDO.setFileId(4L);
+        fileDO.setBizPath("2026/11/25/avatar.png");
+        fileDO.setMimeType("IMAGE/PNG");
+        when(fileMapper.selectById(4L)).thenReturn(fileDO);
+        when(fileStorage.read("2026/11/25/avatar.png")).thenReturn("png-bytes".getBytes(StandardCharsets.UTF_8));
+
+        FileService.FileContent content = fileService.getPreviewableContent(4L);
+
+        // 大小写混写的 MIME 也应放行（忽略大小写比对）
+        assertThat(content.content()).isEqualTo("png-bytes".getBytes(StandardCharsets.UTF_8));
+    }
+
+    @Test
+    void previewableContentShouldRejectNonImage() throws IOException {
+        SystemFileDO fileDO = new SystemFileDO();
+        fileDO.setFileId(5L);
+        fileDO.setBizPath("2026/11/25/secret.pdf");
+        fileDO.setMimeType("application/pdf");
+        when(fileMapper.selectById(5L)).thenReturn(fileDO);
+        when(fileStorage.read("2026/11/25/secret.pdf")).thenReturn("pdf".getBytes(StandardCharsets.UTF_8));
+
+        // 非图片拒绝预览，防凭 fileId 绕过下载权限读任意文件
+        assertServiceException(() -> fileService.getPreviewableContent(5L),
+                SystemErrorCodeConstants.FILE_PREVIEW_NOT_ALLOWED);
+    }
+
+    @Test
     void deleteFileShouldRemoveStorageAndRow() throws IOException {
         SystemFileDO fileDO = new SystemFileDO();
         fileDO.setFileId(2L);

@@ -23,6 +23,7 @@ public final class SystemErrorCodeConstants {
     // 注：1002000005 已被 ONLINE_SESSION_NOT_EXISTS 占用，自助改密码顺延
     public static final ErrorCode AUTH_UPDATE_PASSWORD_OLD_ERROR = new ErrorCode(1002000006, "修改密码失败，旧密码不正确");
     public static final ErrorCode AUTH_UPDATE_PASSWORD_SAME = new ErrorCode(1002000007, "新密码不能与旧密码相同");
+    public static final ErrorCode AUTH_AVATAR_TYPE_NOT_ALLOWED = new ErrorCode(1002000008, "头像仅支持图片文件");
     public static final ErrorCode ONLINE_SESSION_NOT_EXISTS = new ErrorCode(1002000005, "会话不存在或已下线");
 
     // ========== 用户模块 1-002-001-xxx ==========
@@ -77,6 +78,7 @@ public final class SystemErrorCodeConstants {
     public static final ErrorCode FILE_TYPE_FORBIDDEN = new ErrorCode(1002007001, "不允许上传该类型的文件");
     public static final ErrorCode FILE_STORAGE_FAILED = new ErrorCode(1002007002, "文件存储操作失败");
     public static final ErrorCode FILE_EMPTY = new ErrorCode(1002007003, "上传文件不能为空");
+    public static final ErrorCode FILE_PREVIEW_NOT_ALLOWED = new ErrorCode(1002007004, "仅允许预览图片类文件");
 
     // ========== 参数管理模块 1-002-008-xxx ==========
 

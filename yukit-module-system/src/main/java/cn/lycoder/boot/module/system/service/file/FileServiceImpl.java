@@ -60,6 +60,10 @@ public class FileServiceImpl implements FileService {
      * SHA-256 摘要算法名（JDK 标准别名）
      */
     private static final String HASH_ALGORITHM = "SHA-256";
+    /**
+     * 可预览 MIME 前缀：仅图片类文件允许 inline 展示
+     */
+    private static final String IMAGE_MIME_PREFIX = "image/";
 
     private final SystemFileMapper fileMapper;
     private final FileStorage fileStorage;
@@ -125,6 +129,18 @@ public class FileServiceImpl implements FileService {
         SystemFileDO fileDO = validateFileExists(fileId);
         byte[] content = readWithWrapper(fileDO.getBizPath());
         return new FileContent(fileDO, content);
+    }
+
+    @Override
+    public FileContent getPreviewableContent(Long fileId) {
+        // 展示端点仅登录态不鉴权，非图片一律拒绝，防凭 fileId 预览绕过下载权限
+        FileContent content = getFileContent(fileId);
+        String mimeType = content.file().getMimeType();
+        if (mimeType == null || !mimeType.toLowerCase(Locale.ROOT).startsWith(IMAGE_MIME_PREFIX)) {
+            log.warn("[getPreviewableContent] 拦截非图片预览, fileId={}, mimeType={}", fileId, mimeType);
+            throw new ServiceException(SystemErrorCodeConstants.FILE_PREVIEW_NOT_ALLOWED);
+        }
+        return content;
     }
 
     @Override

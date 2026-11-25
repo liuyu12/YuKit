@@ -6,18 +6,22 @@ import cn.lycoder.boot.framework.common.exception.ServiceException;
 import cn.lycoder.boot.module.system.controller.admin.auth.vo.AuthLoginReqVO;
 import cn.lycoder.boot.module.system.controller.admin.auth.vo.AuthLoginRespVO;
 import cn.lycoder.boot.module.system.controller.admin.auth.vo.AuthUpdatePasswordReqVO;
+import cn.lycoder.boot.module.system.dal.dataobject.file.SystemFileDO;
 import cn.lycoder.boot.module.system.dal.dataobject.user.SystemUserDO;
 import cn.lycoder.boot.module.system.dal.mapper.user.SystemUserMapper;
 import cn.lycoder.boot.module.system.enums.logger.LoginResultTypeEnum;
 import cn.lycoder.boot.module.system.service.captcha.CaptchaService;
+import cn.lycoder.boot.module.system.service.file.FileService;
 import cn.lycoder.boot.module.system.service.logger.LoginLogService;
 import cn.lycoder.boot.module.system.service.online.OnlineSessionService;
+import cn.lycoder.boot.module.system.service.user.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.Clock;
@@ -28,6 +32,7 @@ import static cn.lycoder.boot.module.system.enums.SystemErrorCodeConstants.AUTH_
 import static cn.lycoder.boot.module.system.enums.SystemErrorCodeConstants.AUTH_LOGIN_USER_DISABLED;
 import static cn.lycoder.boot.module.system.enums.SystemErrorCodeConstants.AUTH_UPDATE_PASSWORD_OLD_ERROR;
 import static cn.lycoder.boot.module.system.enums.SystemErrorCodeConstants.AUTH_UPDATE_PASSWORD_SAME;
+import static cn.lycoder.boot.module.system.enums.SystemErrorCodeConstants.AUTH_AVATAR_TYPE_NOT_ALLOWED;
 import static cn.lycoder.boot.module.system.enums.SystemErrorCodeConstants.USER_NOT_EXISTS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -40,6 +45,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -57,6 +63,8 @@ class AuthServiceImplTest {
     private CaptchaService captchaService;
     private LoginAttemptService loginAttemptService;
     private LoginLogService loginLogService;
+    private FileService fileService;
+    private UserService userService;
     private AuthServiceImpl authService;
     private MockHttpServletRequest request;
 
@@ -67,8 +75,10 @@ class AuthServiceImplTest {
         captchaService = mock(CaptchaService.class);
         loginAttemptService = mock(LoginAttemptService.class);
         loginLogService = mock(LoginLogService.class);
+        fileService = mock(FileService.class);
+        userService = mock(UserService.class);
         authService = new AuthServiceImpl(userMapper, passwordEncoder, captchaService,
-                loginAttemptService, loginLogService, TEST_CLOCK);
+                loginAttemptService, loginLogService, fileService, userService, TEST_CLOCK);
         request = new MockHttpServletRequest();
         request.setRemoteAddr("10.0.0.1");
     }
@@ -259,6 +269,36 @@ class AuthServiceImplTest {
                     .isInstanceOf(ServiceException.class)
                     .extracting(e -> ((ServiceException) e).getCode())
                     .isEqualTo(USER_NOT_EXISTS.getCode());
+        }
+    }
+
+    @Test
+    @DisplayName("头像：非图片扩展名拒绝，不触达存储")
+    void updateAvatarRejectsNonImage() {
+        MockMultipartFile exe = new MockMultipartFile("file", "virus.exe",
+                "application/octet-stream", new byte[]{1});
+
+        assertThatThrownBy(() -> authService.updateAvatar(exe))
+                .isInstanceOf(ServiceException.class)
+                .extracting(e -> ((ServiceException) e).getCode())
+                .isEqualTo(AUTH_AVATAR_TYPE_NOT_ALLOWED.getCode());
+        verifyNoInteractions(fileService, userService);
+    }
+
+    @Test
+    @DisplayName("头像：扩展名大写也放行，存 file 模块后回写预览 URL")
+    void updateAvatarSuccessWithUpperExtension() {
+        SystemFileDO saved = new SystemFileDO();
+        saved.setFileId(7L);
+        when(fileService.createFile(any())).thenReturn(saved);
+
+        try (MockedStatic<StpUtil> stp = mockStatic(StpUtil.class)) {
+            stp.when(StpUtil::getLoginIdAsLong).thenReturn(2L);
+            String url = authService.updateAvatar(new MockMultipartFile("file", "Me.PNG",
+                    "image/png", new byte[]{1}));
+
+            assertThat(url).isEqualTo("/system/files/7/preview");
+            verify(userService).updateUserAvatar(2L, "/system/files/7/preview");
         }
     }
 }

@@ -4,6 +4,7 @@ import cn.lycoder.boot.module.system.controller.admin.auth.vo.AuthLoginReqVO;
 import cn.lycoder.boot.module.system.controller.admin.auth.vo.AuthLoginRespVO;
 import cn.lycoder.boot.module.system.controller.admin.auth.vo.AuthUpdatePasswordReqVO;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 认证 Service 接口
@@ -30,4 +31,12 @@ public interface AuthService {
      * @param reqVO 旧/新密码
      */
     void updatePassword(AuthUpdatePasswordReqVO reqVO);
+
+    /**
+     * 当前登录用户上传并更新头像，返回可直接用于 img src 的相对访问路径
+     *
+     * @param file 头像图片文件
+     * @return 头像访问 URL
+     */
+    String updateAvatar(MultipartFile file);
 }

@@ -163,6 +163,33 @@ class UserServiceImplTest {
         assertThat(userService.getUserProfile(7L).getUserName()).isEqualTo("viewer");
     }
 
+    @Test
+    void updateUserAvatarShouldOnlyTouchAvatarColumn() {
+        when(userMapper.selectById(8L)).thenReturn(buildUser(8L, "pic"));
+
+        userService.updateUserAvatar(8L, "/system/files/9/preview");
+
+        ArgumentCaptor<SystemUserDO> captor = ArgumentCaptor.forClass(SystemUserDO.class);
+        verify(userMapper).updateById(captor.capture());
+        SystemUserDO updated = captor.getValue();
+        assertThat(updated.getUserId()).isEqualTo(8L);
+        assertThat(updated.getAvatar()).isEqualTo("/system/files/9/preview");
+        // 仅头像列，其余字段不得被触碰
+        assertThat(updated.getNickName()).isNull();
+        assertThat(updated.getPassword()).isNull();
+    }
+
+    @Test
+    void updateUserAvatarShouldRejectNotExists() {
+        when(userMapper.selectById(97L)).thenReturn(null);
+
+        assertThatThrownBy(() -> userService.updateUserAvatar(97L, "/system/files/1/preview"))
+                .isInstanceOf(ServiceException.class)
+                .extracting(e -> ((ServiceException) e).getCode())
+                .isEqualTo(SystemErrorCodeConstants.USER_NOT_EXISTS.getCode());
+        verify(userMapper, never()).updateById(any(SystemUserDO.class));
+    }
+
     private SystemUserDO buildUser(Long userId, String userName) {
         SystemUserDO user = new SystemUserDO();
         user.setUserId(userId);

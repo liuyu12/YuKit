@@ -135,6 +135,17 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @IgnoreDataPermission
+    public void updateUserAvatar(Long userId, String avatar) {
+        validateUserExists(userId);
+        // 仅触碰 avatar 列；旧头像文件不自动删除（无引用计数，误删风险大于存储收益）
+        SystemUserDO updateObj = new SystemUserDO();
+        updateObj.setUserId(userId);
+        updateObj.setAvatar(avatar);
+        userMapper.updateById(updateObj);
+    }
+
+    @Override
     public PageResult<SystemUserDO> getUserPage(UserPageReqVO reqVO) {
         // 数据权限由 MP DataPermissionInterceptor 对 sys_user 自动追加 dept_id 条件，无需在此手动处理
         LambdaQueryWrapper<SystemUserDO> wrapper = Wrappers.<SystemUserDO>lambdaQuery()

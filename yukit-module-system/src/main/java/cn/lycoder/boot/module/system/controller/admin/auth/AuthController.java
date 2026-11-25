@@ -17,6 +17,7 @@ import cn.lycoder.boot.module.system.service.auth.AuthService;
 import cn.lycoder.boot.module.system.service.captcha.CaptchaService;
 import cn.lycoder.boot.module.system.service.user.UserService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -26,7 +27,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 管理后台 - 认证
@@ -108,5 +111,17 @@ public class AuthController {
     public Result<Boolean> updateProfile(@RequestBody @Valid UserProfileUpdateReqVO reqVO) {
         userService.updateUserProfile(SecurityFrameworkUtils.getLoginUserId(), reqVO);
         return Result.success(true);
+    }
+
+    /**
+     * 个人中心：上传并更新头像，返回可直接用于 img src 的相对访问路径
+     * <p>
+     * 回显走 file 模块 GET /system/files/{id}/preview（仅图片、登录态即可）
+     */
+    @Operation(summary = "上传更新头像")
+    @OperationLog(module = "认证管理", name = "修改头像", type = OperationType.UPDATE, recordParams = false)
+    @PostMapping("/avatar")
+    public Result<String> updateAvatar(@Parameter(description = "头像图片文件") @RequestPart("file") MultipartFile file) {
+        return Result.success(authService.updateAvatar(file));
     }
 }

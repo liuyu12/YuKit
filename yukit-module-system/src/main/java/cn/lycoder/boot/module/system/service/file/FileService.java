@@ -37,6 +37,12 @@ public interface FileService {
     FileContent getFileContent(Long fileId);
 
     /**
+     * 预览用文件内容：仅限图片 MIME（inline 展示端点只靠登录态不鉴权，
+     * 不收紧类型等于凭 ID 绕过下载权限读任意文件）
+     */
+    FileContent getPreviewableContent(Long fileId);
+
+    /**
      * 删除文件（先删存储实体，再删元数据行）
      */
     void deleteFile(Long fileId);

@@ -5,12 +5,15 @@ import cn.lycoder.boot.framework.mybatis.datapermission.annotation.IgnoreDataPer
 import cn.lycoder.boot.module.system.controller.admin.auth.vo.AuthLoginReqVO;
 import cn.lycoder.boot.module.system.controller.admin.auth.vo.AuthLoginRespVO;
 import cn.lycoder.boot.module.system.controller.admin.auth.vo.AuthUpdatePasswordReqVO;
+import cn.lycoder.boot.module.system.dal.dataobject.file.SystemFileDO;
 import cn.lycoder.boot.module.system.dal.dataobject.user.SystemUserDO;
 import cn.lycoder.boot.module.system.dal.mapper.user.SystemUserMapper;
 import cn.lycoder.boot.module.system.enums.logger.LoginResultTypeEnum;
 import cn.lycoder.boot.module.system.service.captcha.CaptchaService;
+import cn.lycoder.boot.module.system.service.file.FileService;
 import cn.lycoder.boot.module.system.service.logger.LoginLogService;
 import cn.lycoder.boot.module.system.service.online.OnlineSessionService;
+import cn.lycoder.boot.module.system.service.user.UserService;
 import cn.dev33.satoken.stp.StpUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,10 +21,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.Locale;
+import java.util.Set;
 
+import static cn.lycoder.boot.module.system.enums.SystemErrorCodeConstants.AUTH_AVATAR_TYPE_NOT_ALLOWED;
 import static cn.lycoder.boot.module.system.enums.SystemErrorCodeConstants.AUTH_LOGIN_ACCOUNT_LOCKED;
 import static cn.lycoder.boot.module.system.enums.SystemErrorCodeConstants.AUTH_LOGIN_BAD_CREDENTIALS;
 import static cn.lycoder.boot.module.system.enums.SystemErrorCodeConstants.AUTH_LOGIN_USER_DISABLED;
@@ -41,12 +49,22 @@ public class AuthServiceImpl implements AuthService {
      * 代理头未透传真实 IP 时的占位值（Nginx 等对未知来源常填字面量 unknown）
      */
     private static final String UNKNOWN = "unknown";
+    /**
+     * 头像允许的扩展名白名单（严于 file 模块黑名单：头像语义就是图片）
+     */
+    private static final Set<String> AVATAR_ALLOWED_EXTENSIONS = Set.of("jpg", "jpeg", "png", "gif", "webp", "bmp");
+    /**
+     * 头像访问相对路径模板，指向 file 模块的图片预览端点
+     */
+    private static final String AVATAR_URL_TEMPLATE = "/system/files/%d/preview";
 
     private final SystemUserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final CaptchaService captchaService;
     private final LoginAttemptService loginAttemptService;
     private final LoginLogService loginLogService;
+    private final FileService fileService;
+    private final UserService userService;
     /**
      * 全局时间源（yukit.zone-id 配置），避免无参 now() 随 JVM 默认时区漂移
      */
@@ -180,6 +198,21 @@ public class AuthServiceImpl implements AuthService {
         userMapper.updateById(updateObj);
         // 踢出该账号全部会话（含当前设备）：凭证变更后旧令牌一律失效，强制用新密码重登
         StpUtil.kickout(userId);
+    }
+
+    @Override
+    public String updateAvatar(MultipartFile file) {
+        // 扩展名白名单先拦（不信任前端 type），非法类型不落存储
+        String extension = StringUtils.getFilenameExtension(
+                file == null ? null : file.getOriginalFilename());
+        if (extension == null || !AVATAR_ALLOWED_EXTENSIONS.contains(extension.toLowerCase(Locale.ROOT))) {
+            throw new ServiceException(AUTH_AVATAR_TYPE_NOT_ALLOWED);
+        }
+        // 存储统一交给 file 模块（空文件/黑名单/UUID 重命名/日期目录复用同一套规则）
+        SystemFileDO saved = fileService.createFile(file);
+        String avatarUrl = String.format(AVATAR_URL_TEMPLATE, saved.getFileId());
+        userService.updateUserAvatar(StpUtil.getLoginIdAsLong(), avatarUrl);
+        return avatarUrl;
     }
 
     /**

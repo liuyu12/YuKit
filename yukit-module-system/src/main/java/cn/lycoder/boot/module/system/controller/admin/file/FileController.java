@@ -94,6 +94,25 @@ public class FileController {
                 .body(new ByteArrayResource(fileContent.content()));
     }
 
+    /**
+     * 预览文件（仅图片，inline 展示）
+     * <p>
+     * 不挂按钮权限码：头像/列表缩略图等 <img> 标签无法携带令牌头之外的凭证，
+     * 类型收紧由 FileService.getPreviewableContent 兜底（登录态仍必需）
+     */
+    @Operation(summary = "预览文件（仅图片）")
+    @GetMapping("/{fileId}/preview")
+    public ResponseEntity<Resource> previewFile(@Parameter(description = "文件ID") @PathVariable("fileId") Long fileId) {
+        FileService.FileContent fileContent = fileService.getPreviewableContent(fileId);
+        SystemFileDO fileDO = fileContent.file();
+        MediaType mediaType = MediaType.parseMediaType(fileDO.getMimeType());
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.inline().build().toString())
+                .contentType(mediaType)
+                .contentLength(fileContent.content().length)
+                .body(new ByteArrayResource(fileContent.content()));
+    }
+
     @Operation(summary = "删除文件")
     @OperationLog(module = "文件管理", name = "删除文件", type = OperationType.DELETE)
     @DeleteMapping("/{fileId}")

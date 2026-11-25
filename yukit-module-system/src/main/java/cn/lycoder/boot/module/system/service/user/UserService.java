@@ -59,6 +59,11 @@ public interface UserService {
     void updateUserProfile(Long userId, UserProfileUpdateReqVO reqVO);
 
     /**
+     * 个人中心：更新指定用户头像（URL 由服务端上传链路生成，不接受外部直传）
+     */
+    void updateUserAvatar(Long userId, String avatar);
+
+    /**
      * 分页查询用户
      */
     PageResult<SystemUserDO> getUserPage(UserPageReqVO reqVO);
