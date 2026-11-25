@@ -1,0 +1,21 @@
+package cn.lycoder.boot.module.system.controller.admin.monitor.vo;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+
+/**
+ * Redis 缓存 key 概览（SCAN 遍历结果单条）
+ */
+@Data
+@Schema(description = "管理后台 - Redis 缓存 key 概览")
+public class CacheKeyRespVO {
+
+    @Schema(description = "缓存 key", example = "yukit:cache:dict::sys_user_sex")
+    private String key;
+
+    @Schema(description = "值类型", example = "string")
+    private String type;
+
+    @Schema(description = "剩余过期时间（秒），-1 永不过期，-2 已不存在", example = "3500")
+    private Long expire;
+}
