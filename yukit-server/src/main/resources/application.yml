@@ -221,6 +221,7 @@ yukit:
     caches:
       # 字典/配置类：变化少、TTL 长
       dict: maximumSize=200,expireAfterWrite=1h
+      config: maximumSize=200,expireAfterWrite=1h
       # 用户/权限类：适中
       user: maximumSize=1000,expireAfterWrite=5m
     # 是否记录命中率统计（排查期可开，生产建议关）
@@ -234,4 +235,5 @@ yukit:
       # 按缓存名覆盖 TTL（对应 @Cacheable 的 cacheNames）
       ttl-by-cache:
         dict: 1h
+        config: 1h
         user: 5m

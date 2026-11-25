@@ -74,4 +74,10 @@ public final class SystemErrorCodeConstants {
     public static final ErrorCode FILE_TYPE_FORBIDDEN = new ErrorCode(1002007001, "不允许上传该类型的文件");
     public static final ErrorCode FILE_STORAGE_FAILED = new ErrorCode(1002007002, "文件存储操作失败");
     public static final ErrorCode FILE_EMPTY = new ErrorCode(1002007003, "上传文件不能为空");
+
+    // ========== 参数管理模块 1-002-008-xxx ==========
+
+    public static final ErrorCode CONFIG_NOT_EXISTS = new ErrorCode(1002008000, "参数不存在");
+    public static final ErrorCode CONFIG_KEY_EXISTS = new ErrorCode(1002008001, "参数键名已存在");
+    public static final ErrorCode CONFIG_BUILT_IN_FORBIDDEN = new ErrorCode(1002008002, "内置参数不允许删除");
 }
