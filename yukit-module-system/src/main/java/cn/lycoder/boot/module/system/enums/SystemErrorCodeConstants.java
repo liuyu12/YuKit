@@ -89,4 +89,9 @@ public final class SystemErrorCodeConstants {
     // ========== 公告管理模块 1-002-009-xxx ==========
 
     public static final ErrorCode NOTICE_NOT_EXISTS = new ErrorCode(1002009000, "公告不存在");
+
+    // ========== 岗位管理 1002010xxx ==========
+    public static final ErrorCode POST_NOT_EXISTS = new ErrorCode(1002010000, "岗位不存在");
+    public static final ErrorCode POST_CODE_DUPLICATE = new ErrorCode(1002010001, "岗位编码已存在");
+    public static final ErrorCode POST_NAME_DUPLICATE = new ErrorCode(1002010002, "岗位名称已存在");
 }
