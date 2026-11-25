@@ -1,13 +1,17 @@
 package cn.lycoder.boot.module.system.service.online;
 
+import cn.dev33.satoken.SaManager;
 import cn.dev33.satoken.session.SaSession;
+import cn.dev33.satoken.session.SaTerminalInfo;
 import cn.dev33.satoken.stp.StpUtil;
 import cn.lycoder.boot.framework.common.exception.ServiceException;
 import cn.lycoder.boot.framework.mybatis.datapermission.core.DataPermissionUtils;
+import cn.lycoder.boot.module.system.controller.admin.online.vo.OnlineSessionDetailRespVO;
 import cn.lycoder.boot.module.system.controller.admin.online.vo.OnlineSessionRespVO;
 import cn.lycoder.boot.module.system.dal.dataobject.user.SystemUserDO;
 import cn.lycoder.boot.module.system.dal.mapper.user.SystemUserMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -119,6 +123,46 @@ public class OnlineSessionServiceImpl implements OnlineSessionService {
                 vo.setNickname(user.getNickName());
             }
         });
+    }
+
+    @Override
+    public OnlineSessionDetailRespVO getOnlineSession(String tokenValue) {
+        // 令牌失效直接拒绝，与 forceLogout 同语义（详情页是强操作的入口，不对死会话降级展示）
+        Object loginId = StpUtil.getLoginIdByToken(tokenValue);
+        if (loginId == null) {
+            throw new ServiceException(ONLINE_SESSION_NOT_EXISTS);
+        }
+        OnlineSessionRespVO base = resolveSession(tokenValue);
+        if (base == null) {
+            throw new ServiceException(ONLINE_SESSION_NOT_EXISTS);
+        }
+        fillUserInfo(List.of(base));
+        OnlineSessionDetailRespVO detail = new OnlineSessionDetailRespVO();
+        BeanUtils.copyProperties(base, detail);
+        // 账号维度信息：从 Account-Session 终端列表定位本令牌，顺带取设备类型/登录设备数
+        SaSession accountSession = DataPermissionUtils.executeIgnore(
+                () -> StpUtil.getSessionByLoginId(loginId, false));
+        if (accountSession != null) {
+            List<SaTerminalInfo> terminals = accountSession.terminalListCopy();
+            detail.setTotalDeviceCount(terminals.size());
+            terminals.stream()
+                    .filter(t -> Objects.equals(t.getTokenValue(), tokenValue))
+                    .findFirst()
+                    .ifPresent(t -> detail.setDeviceType(t.getDeviceType()));
+            detail.setSessionCreateTime(toDateTime(accountSession.getCreateTime()));
+            detail.setSessionTimeToLive(getSessionTimeToLive(accountSession.getId()));
+        }
+        return detail;
+    }
+
+    /**
+     * 账号会话剩余存活秒数（SaTokenDao.NOT_VALUE_EXPIRE=-2 表示永不过期）：
+     * SaSession 不提供绝对过期时间，只能绕 dao 查 TTL；
+     * key 拼装须与 Sa-Token 存储型 key 一致：{tokenName}:{loginType}:session:{sessionId}
+     */
+    private static Long getSessionTimeToLive(String sessionId) {
+        String key = SaManager.getConfig().getTokenName() + ":" + StpUtil.getLoginType() + ":session:" + sessionId;
+        return SaManager.getSaTokenDao().getSessionTimeout(key);
     }
 
     @Override

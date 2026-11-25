@@ -1,5 +1,6 @@
 package cn.lycoder.boot.module.system.service.online;
 
+import cn.lycoder.boot.module.system.controller.admin.online.vo.OnlineSessionDetailRespVO;
 import cn.lycoder.boot.module.system.controller.admin.online.vo.OnlineSessionRespVO;
 
 import java.util.List;
@@ -23,6 +24,14 @@ public interface OnlineSessionService {
      * 查询当前全部在线会话（按登录时间倒序）
      */
     List<OnlineSessionRespVO> getOnlineSessionList();
+
+    /**
+     * 查询单个在线会话详情（列表字段 + 设备类型/登录设备数/会话剩余存活等账号维度信息）
+     *
+     * @param tokenValue 目标会话令牌
+     * @return 会话详情；令牌已失效抛 ONLINE_SESSION_NOT_EXISTS
+     */
+    OnlineSessionDetailRespVO getOnlineSession(String tokenValue);
 
     /**
      * 强制指定会话下线（踢下线，令牌再访问将提示"被踢下线"）

@@ -4,6 +4,7 @@ import cn.dev33.satoken.annotation.SaCheckPermission;
 import cn.lycoder.boot.framework.common.operatelog.OperationLog;
 import cn.lycoder.boot.framework.common.operatelog.OperationType;
 import cn.lycoder.boot.framework.common.pojo.Result;
+import cn.lycoder.boot.module.system.controller.admin.online.vo.OnlineSessionDetailRespVO;
 import cn.lycoder.boot.module.system.controller.admin.online.vo.OnlineSessionRespVO;
 import cn.lycoder.boot.module.system.service.online.OnlineSessionService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -39,6 +40,17 @@ public class OnlineSessionController {
     @SaCheckPermission("monitor:online:list")
     public Result<List<OnlineSessionRespVO>> getOnlineSessionList() {
         return Result.success(onlineSessionService.getOnlineSessionList());
+    }
+
+    /**
+     * 查询在线会话详情（仅存活的在线会话，非历史审计，故不记操作日志）
+     */
+    @Operation(summary = "查询在线会话详情")
+    @GetMapping("/{tokenValue}")
+    @SaCheckPermission("monitor:online:query")
+    public Result<OnlineSessionDetailRespVO> getOnlineSession(
+            @Parameter(description = "会话令牌") @PathVariable("tokenValue") String tokenValue) {
+        return Result.success(onlineSessionService.getOnlineSession(tokenValue));
     }
 
     /**
