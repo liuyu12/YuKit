@@ -2,6 +2,7 @@ package cn.lycoder.boot.module.system.service.auth;
 
 import cn.lycoder.boot.module.system.controller.admin.auth.vo.AuthLoginReqVO;
 import cn.lycoder.boot.module.system.controller.admin.auth.vo.AuthLoginRespVO;
+import cn.lycoder.boot.module.system.controller.admin.auth.vo.AuthUpdatePasswordReqVO;
 import jakarta.servlet.http.HttpServletRequest;
 
 /**
@@ -22,4 +23,11 @@ public interface AuthService {
      * 退出登录
      */
     void logout();
+
+    /**
+     * 当前登录用户自助修改密码：校验旧密码，成功后踢出该账号全部会话（含当前设备），需重新登录
+     *
+     * @param reqVO 旧/新密码
+     */
+    void updatePassword(AuthUpdatePasswordReqVO reqVO);
 }

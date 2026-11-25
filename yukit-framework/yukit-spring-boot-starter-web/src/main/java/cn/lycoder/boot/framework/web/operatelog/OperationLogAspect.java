@@ -73,6 +73,8 @@ public class OperationLogAspect {
         }
 
         LocalDateTime startTime = LocalDateTime.now(clock);
+        // 操作人须在 proceed 前捕获：业务内部踢线/登出（如自助改密）会使事后读不到登录态
+        String operator = resolveOperator();
         long startNanos = System.nanoTime();
         Object result = null;
         Throwable error = null;
@@ -84,7 +86,7 @@ public class OperationLogAspect {
             throw ex;
         } finally {
             try {
-                OperationLogRecord record = buildRecord(joinPoint, operationLog,
+                OperationLogRecord record = buildRecord(joinPoint, operationLog, operator,
                         result, error, startTime, (System.nanoTime() - startNanos) / 1_000_000);
                 recorder.record(record);
             } catch (Exception e) {
@@ -93,7 +95,7 @@ public class OperationLogAspect {
         }
     }
 
-    private OperationLogRecord buildRecord(ProceedingJoinPoint joinPoint, OperationLog annotation,
+    private OperationLogRecord buildRecord(ProceedingJoinPoint joinPoint, OperationLog annotation, String operator,
                                            Object result, Throwable error,
                                            LocalDateTime startTime, long durationMs) {
         OperationLogRecord record = new OperationLogRecord();
@@ -101,7 +103,7 @@ public class OperationLogAspect {
         record.setType(annotation.type().getCode());
         record.setModule(annotation.module());
         record.setName(annotation.name());
-        record.setOperator(resolveOperator());
+        record.setOperator(operator);
         record.setJavaMethod(joinPoint.getSignature().getDeclaringType().getSimpleName()
                 + "." + joinPoint.getSignature().getName());
         record.setStartTime(startTime);

@@ -5,6 +5,7 @@ import cn.dev33.satoken.stp.StpUtil;
 import cn.lycoder.boot.framework.common.exception.ServiceException;
 import cn.lycoder.boot.module.system.controller.admin.auth.vo.AuthLoginReqVO;
 import cn.lycoder.boot.module.system.controller.admin.auth.vo.AuthLoginRespVO;
+import cn.lycoder.boot.module.system.controller.admin.auth.vo.AuthUpdatePasswordReqVO;
 import cn.lycoder.boot.module.system.dal.dataobject.user.SystemUserDO;
 import cn.lycoder.boot.module.system.dal.mapper.user.SystemUserMapper;
 import cn.lycoder.boot.module.system.enums.logger.LoginResultTypeEnum;
@@ -14,6 +15,7 @@ import cn.lycoder.boot.module.system.service.online.OnlineSessionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -24,9 +26,13 @@ import java.time.ZoneId;
 import static cn.lycoder.boot.module.system.enums.SystemErrorCodeConstants.AUTH_LOGIN_ACCOUNT_LOCKED;
 import static cn.lycoder.boot.module.system.enums.SystemErrorCodeConstants.AUTH_LOGIN_BAD_CREDENTIALS;
 import static cn.lycoder.boot.module.system.enums.SystemErrorCodeConstants.AUTH_LOGIN_USER_DISABLED;
+import static cn.lycoder.boot.module.system.enums.SystemErrorCodeConstants.AUTH_UPDATE_PASSWORD_OLD_ERROR;
+import static cn.lycoder.boot.module.system.enums.SystemErrorCodeConstants.AUTH_UPDATE_PASSWORD_SAME;
+import static cn.lycoder.boot.module.system.enums.SystemErrorCodeConstants.USER_NOT_EXISTS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -180,5 +186,79 @@ class AuthServiceImplTest {
         verify(userMapper).updateById(any(SystemUserDO.class));
         verify(loginLogService).createLoginLog(eq(2L), eq("ry"),
                 eq(LoginResultTypeEnum.SUCCESS), any(), any(), any());
+    }
+
+    private AuthUpdatePasswordReqVO pwdReq(String oldPwd, String newPwd) {
+        AuthUpdatePasswordReqVO reqVO = new AuthUpdatePasswordReqVO();
+        reqVO.setOldPassword(oldPwd);
+        reqVO.setNewPassword(newPwd);
+        return reqVO;
+    }
+
+    @Test
+    @DisplayName("自助改密：旧密码不正确拒绝，不落库不踢线")
+    void updatePasswordOldWrong() {
+        try (MockedStatic<StpUtil> stp = mockStatic(StpUtil.class)) {
+            stp.when(StpUtil::getLoginIdAsLong).thenReturn(2L);
+            when(userMapper.selectById(2L)).thenReturn(user(2L, "ry", SystemUserDO.STATUS_ENABLE));
+            when(passwordEncoder.matches("wrong-old", "encoded")).thenReturn(false);
+
+            assertThatThrownBy(() -> authService.updatePassword(pwdReq("wrong-old", "newPass123")))
+                    .isInstanceOf(ServiceException.class)
+                    .extracting(e -> ((ServiceException) e).getCode())
+                    .isEqualTo(AUTH_UPDATE_PASSWORD_OLD_ERROR.getCode());
+            verify(userMapper, never()).updateById(any(SystemUserDO.class));
+            stp.verify(() -> StpUtil.kickout(anyLong()), never());
+        }
+    }
+
+    @Test
+    @DisplayName("自助改密：新旧相同拒绝")
+    void updatePasswordSameAsOld() {
+        try (MockedStatic<StpUtil> stp = mockStatic(StpUtil.class)) {
+            stp.when(StpUtil::getLoginIdAsLong).thenReturn(2L);
+            when(userMapper.selectById(2L)).thenReturn(user(2L, "ry", SystemUserDO.STATUS_ENABLE));
+            when(passwordEncoder.matches("admin123", "encoded")).thenReturn(true);
+
+            assertThatThrownBy(() -> authService.updatePassword(pwdReq("admin123", "admin123")))
+                    .isInstanceOf(ServiceException.class)
+                    .extracting(e -> ((ServiceException) e).getCode())
+                    .isEqualTo(AUTH_UPDATE_PASSWORD_SAME.getCode());
+            verify(userMapper, never()).updateById(any(SystemUserDO.class));
+        }
+    }
+
+    @Test
+    @DisplayName("自助改密：成功后只更新密码列并踢出全部会话")
+    void updatePasswordSuccess() {
+        try (MockedStatic<StpUtil> stp = mockStatic(StpUtil.class)) {
+            stp.when(StpUtil::getLoginIdAsLong).thenReturn(2L);
+            when(userMapper.selectById(2L)).thenReturn(user(2L, "ry", SystemUserDO.STATUS_ENABLE));
+            when(passwordEncoder.matches("admin123", "encoded")).thenReturn(true);
+            when(passwordEncoder.matches("newPass123", "encoded")).thenReturn(false);
+            when(passwordEncoder.encode("newPass123")).thenReturn("$2a$new");
+
+            authService.updatePassword(pwdReq("admin123", "newPass123"));
+
+            ArgumentCaptor<SystemUserDO> captor = ArgumentCaptor.forClass(SystemUserDO.class);
+            verify(userMapper).updateById(captor.capture());
+            assertThat(captor.getValue().getPassword()).isEqualTo("$2a$new");
+            assertThat(captor.getValue().getUserName()).isNull();
+            stp.verify(() -> StpUtil.kickout(2L));
+        }
+    }
+
+    @Test
+    @DisplayName("自助改密：会话对应用户已被删除，拒绝")
+    void updatePasswordUserMissing() {
+        try (MockedStatic<StpUtil> stp = mockStatic(StpUtil.class)) {
+            stp.when(StpUtil::getLoginIdAsLong).thenReturn(99L);
+            when(userMapper.selectById(99L)).thenReturn(null);
+
+            assertThatThrownBy(() -> authService.updatePassword(pwdReq("admin123", "newPass123")))
+                    .isInstanceOf(ServiceException.class)
+                    .extracting(e -> ((ServiceException) e).getCode())
+                    .isEqualTo(USER_NOT_EXISTS.getCode());
+        }
     }
 }

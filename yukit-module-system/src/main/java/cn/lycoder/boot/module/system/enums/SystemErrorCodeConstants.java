@@ -20,6 +20,9 @@ public final class SystemErrorCodeConstants {
     public static final ErrorCode AUTH_LOGIN_CAPTCHA_CODE_ERROR = new ErrorCode(1002000002, "验证码不正确，原因：{}");
     public static final ErrorCode AUTH_LOGOUT_FAILED = new ErrorCode(1002000003, "退出登录失败");
     public static final ErrorCode AUTH_LOGIN_ACCOUNT_LOCKED = new ErrorCode(1002000004, "登录失败，账号已被锁定");
+    // 注：1002000005 已被 ONLINE_SESSION_NOT_EXISTS 占用，自助改密码顺延
+    public static final ErrorCode AUTH_UPDATE_PASSWORD_OLD_ERROR = new ErrorCode(1002000006, "修改密码失败，旧密码不正确");
+    public static final ErrorCode AUTH_UPDATE_PASSWORD_SAME = new ErrorCode(1002000007, "新密码不能与旧密码相同");
     public static final ErrorCode ONLINE_SESSION_NOT_EXISTS = new ErrorCode(1002000005, "会话不存在或已下线");
 
     // ========== 用户模块 1-002-001-xxx ==========

@@ -1,8 +1,10 @@
 package cn.lycoder.boot.module.system.service.auth;
 
 import cn.lycoder.boot.framework.common.exception.ServiceException;
+import cn.lycoder.boot.framework.mybatis.datapermission.annotation.IgnoreDataPermission;
 import cn.lycoder.boot.module.system.controller.admin.auth.vo.AuthLoginReqVO;
 import cn.lycoder.boot.module.system.controller.admin.auth.vo.AuthLoginRespVO;
+import cn.lycoder.boot.module.system.controller.admin.auth.vo.AuthUpdatePasswordReqVO;
 import cn.lycoder.boot.module.system.dal.dataobject.user.SystemUserDO;
 import cn.lycoder.boot.module.system.dal.mapper.user.SystemUserMapper;
 import cn.lycoder.boot.module.system.enums.logger.LoginResultTypeEnum;
@@ -23,6 +25,9 @@ import java.time.LocalDateTime;
 import static cn.lycoder.boot.module.system.enums.SystemErrorCodeConstants.AUTH_LOGIN_ACCOUNT_LOCKED;
 import static cn.lycoder.boot.module.system.enums.SystemErrorCodeConstants.AUTH_LOGIN_BAD_CREDENTIALS;
 import static cn.lycoder.boot.module.system.enums.SystemErrorCodeConstants.AUTH_LOGIN_USER_DISABLED;
+import static cn.lycoder.boot.module.system.enums.SystemErrorCodeConstants.AUTH_UPDATE_PASSWORD_OLD_ERROR;
+import static cn.lycoder.boot.module.system.enums.SystemErrorCodeConstants.AUTH_UPDATE_PASSWORD_SAME;
+import static cn.lycoder.boot.module.system.enums.SystemErrorCodeConstants.USER_NOT_EXISTS;
 
 /**
  * 认证 Service 实现
@@ -143,6 +148,31 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public void logout() {
         StpUtil.logout();
+    }
+
+    @Override
+    @IgnoreDataPermission
+    public void updatePassword(AuthUpdatePasswordReqVO reqVO) {
+        // 会话不可能无主，防御性校验用户仍存在（如管理员已删号但未过期会话）
+        Long userId = StpUtil.getLoginIdAsLong();
+        SystemUserDO user = userMapper.selectById(userId);
+        if (user == null) {
+            throw new ServiceException(USER_NOT_EXISTS);
+        }
+        if (!passwordEncoder.matches(reqVO.getOldPassword(), user.getPassword())) {
+            throw new ServiceException(AUTH_UPDATE_PASSWORD_OLD_ERROR);
+        }
+        // 与存量密码比对，拦截新旧相同（改后必踢线，同密码重设没有意义还徒增断线）
+        if (passwordEncoder.matches(reqVO.getNewPassword(), user.getPassword())) {
+            throw new ServiceException(AUTH_UPDATE_PASSWORD_SAME);
+        }
+        // 只更新密码列，updateBy/updateTime 由 MetaObjectHandler 填充
+        SystemUserDO updateObj = new SystemUserDO();
+        updateObj.setUserId(userId);
+        updateObj.setPassword(passwordEncoder.encode(reqVO.getNewPassword()));
+        userMapper.updateById(updateObj);
+        // 踢出该账号全部会话（含当前设备）：凭证变更后旧令牌一律失效，强制用新密码重登
+        StpUtil.kickout(userId);
     }
 
     /**
