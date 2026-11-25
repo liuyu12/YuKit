@@ -76,7 +76,7 @@ public class AuthServiceImpl implements AuthService {
 
         // 3. 校验账号状态
         if (SystemUserDO.STATUS_DISABLE.equals(user.getStatus())) {
-            record(user.getUserId(), username, LoginResultTypeEnum.USER_DISABLED, "账号被禁用", clientIp, userAgent);
+            recordLoginLog(user.getUserId(), username, LoginResultTypeEnum.USER_DISABLED, "账号被禁用", clientIp, userAgent);
             throw new ServiceException(AUTH_LOGIN_USER_DISABLED);
         }
 
@@ -90,7 +90,7 @@ public class AuthServiceImpl implements AuthService {
         updateLoginInfo(user.getUserId(), clientIp);
 
         // 6. 写入登录日志并组装响应
-        record(user.getUserId(), username, LoginResultTypeEnum.SUCCESS, "登录成功", clientIp, userAgent);
+        recordLoginLog(user.getUserId(), username, LoginResultTypeEnum.SUCCESS, "登录成功", clientIp, userAgent);
         return new AuthLoginRespVO(user.getUserId(),
                 StpUtil.getTokenName(), StpUtil.getTokenValue());
     }
@@ -100,7 +100,7 @@ public class AuthServiceImpl implements AuthService {
      */
     private ServiceException rejectLocked(String username, String clientIp, String userAgent) {
         long remainMinutes = loginAttemptService.getLockRemainMinutes(username);
-        record(null, username, LoginResultTypeEnum.ACCOUNT_LOCKED,
+        recordLoginLog(null, username, LoginResultTypeEnum.ACCOUNT_LOCKED,
                 "账号已锁定，约 " + remainMinutes + " 分钟后解锁", clientIp, userAgent);
         return new ServiceException(AUTH_LOGIN_ACCOUNT_LOCKED.getCode(),
                 AUTH_LOGIN_ACCOUNT_LOCKED.getMsg() + "，请于约 " + remainMinutes + " 分钟后重试");
@@ -112,7 +112,7 @@ public class AuthServiceImpl implements AuthService {
     private ServiceException rejectBadCredentials(SystemUserDO user, String username,
                                                  String clientIp, String userAgent) {
         int failCount = loginAttemptService.recordFailure(username);
-        record(user == null ? null : user.getUserId(), username, LoginResultTypeEnum.BAD_CREDENTIALS,
+        recordLoginLog(user == null ? null : user.getUserId(), username, LoginResultTypeEnum.BAD_CREDENTIALS,
                 "账号或密码错误（连续失败 " + failCount + " 次）", clientIp, userAgent);
         return new ServiceException(AUTH_LOGIN_BAD_CREDENTIALS);
     }
@@ -140,9 +140,11 @@ public class AuthServiceImpl implements AuthService {
 
     /**
      * 写入登录日志：审计失败绝不影响登录主流程
+     * <p>
+     * 命名避开 record——Java 16+ 受限标识符，用作方法名易与记录类声明混淆（Sonar S1201）
      */
-    private void record(Long userId, String username, LoginResultTypeEnum result,
-                        String msg, String clientIp, String userAgent) {
+    private void recordLoginLog(Long userId, String username, LoginResultTypeEnum result,
+                                String msg, String clientIp, String userAgent) {
         try {
             loginLogService.createLoginLog(userId, username, result, msg, clientIp, userAgent);
         } catch (Exception e) {
