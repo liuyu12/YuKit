@@ -1,6 +1,7 @@
 package cn.lycoder.boot.module.system.service.user;
 
 import cn.lycoder.boot.framework.common.exception.ServiceException;
+import cn.lycoder.boot.module.system.controller.admin.auth.vo.UserProfileUpdateReqVO;
 import cn.lycoder.boot.module.system.convert.user.UserConvertImpl;
 import cn.lycoder.boot.module.system.dal.dataobject.user.SystemUserDO;
 import cn.lycoder.boot.module.system.dal.mapper.user.SystemUserMapper;
@@ -117,6 +118,49 @@ class UserServiceImplTest {
 
         verify(loginAttemptService).reset("mike");
         verify(userMapper, never()).updateById(any(SystemUserDO.class));
+    }
+
+    @Test
+    void updateUserProfileShouldOnlyTouchSelfFields() {
+        when(userMapper.selectById(6L)).thenReturn(buildUser(6L, "self"));
+        UserProfileUpdateReqVO reqVO = new UserProfileUpdateReqVO();
+        reqVO.setNickName("新昵称");
+        reqVO.setEmail("me@example.com");
+        reqVO.setPhonenumber("13800000000");
+        reqVO.setSex("1");
+
+        userService.updateUserProfile(6L, reqVO);
+
+        ArgumentCaptor<SystemUserDO> captor = ArgumentCaptor.forClass(SystemUserDO.class);
+        verify(userMapper).updateById(captor.capture());
+        SystemUserDO updated = captor.getValue();
+        assertThat(updated.getUserId()).isEqualTo(6L);
+        assertThat(updated.getNickName()).isEqualTo("新昵称");
+        assertThat(updated.getEmail()).isEqualTo("me@example.com");
+        assertThat(updated.getSex()).isEqualTo("1");
+        // 管理字段不得被自助接口触碰
+        assertThat(updated.getUserName()).isNull();
+        assertThat(updated.getPassword()).isNull();
+        assertThat(updated.getStatus()).isNull();
+        assertThat(updated.getDeptId()).isNull();
+    }
+
+    @Test
+    void updateUserProfileShouldRejectNotExists() {
+        when(userMapper.selectById(98L)).thenReturn(null);
+
+        assertThatThrownBy(() -> userService.updateUserProfile(98L, new UserProfileUpdateReqVO()))
+                .isInstanceOf(ServiceException.class)
+                .extracting(e -> ((ServiceException) e).getCode())
+                .isEqualTo(SystemErrorCodeConstants.USER_NOT_EXISTS.getCode());
+        verify(userMapper, never()).updateById(any(SystemUserDO.class));
+    }
+
+    @Test
+    void getUserProfileShouldReturnWhenExists() {
+        when(userMapper.selectById(7L)).thenReturn(buildUser(7L, "viewer"));
+
+        assertThat(userService.getUserProfile(7L).getUserName()).isEqualTo("viewer");
     }
 
     private SystemUserDO buildUser(Long userId, String userName) {

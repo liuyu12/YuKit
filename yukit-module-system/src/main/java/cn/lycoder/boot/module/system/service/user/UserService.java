@@ -1,6 +1,7 @@
 package cn.lycoder.boot.module.system.service.user;
 
 import cn.lycoder.boot.framework.common.pojo.PageResult;
+import cn.lycoder.boot.module.system.controller.admin.auth.vo.UserProfileUpdateReqVO;
 import cn.lycoder.boot.module.system.controller.admin.user.vo.UserCreateReqVO;
 import cn.lycoder.boot.module.system.controller.admin.user.vo.UserPageReqVO;
 import cn.lycoder.boot.module.system.controller.admin.user.vo.UserUpdateReqVO;
@@ -46,6 +47,16 @@ public interface UserService {
      * 获取用户，不存在抛异常
      */
     SystemUserDO getUser(Long userId);
+
+    /**
+     * 个人中心：获取指定用户的资料，用户不存在抛异常（会话对应用户已被删除的防御）
+     */
+    SystemUserDO getUserProfile(Long userId);
+
+    /**
+     * 个人中心：更新指定用户的自助资料（昵称/邮箱/手机/性别）
+     */
+    void updateUserProfile(Long userId, UserProfileUpdateReqVO reqVO);
 
     /**
      * 分页查询用户

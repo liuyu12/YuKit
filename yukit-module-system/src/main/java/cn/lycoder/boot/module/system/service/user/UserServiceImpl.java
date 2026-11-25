@@ -3,6 +3,7 @@ package cn.lycoder.boot.module.system.service.user;
 import cn.lycoder.boot.framework.common.exception.ServiceException;
 import cn.lycoder.boot.framework.common.pojo.PageResult;
 import cn.lycoder.boot.framework.mybatis.datapermission.annotation.IgnoreDataPermission;
+import cn.lycoder.boot.module.system.controller.admin.auth.vo.UserProfileUpdateReqVO;
 import cn.lycoder.boot.module.system.controller.admin.user.vo.UserCreateReqVO;
 import cn.lycoder.boot.module.system.controller.admin.user.vo.UserPageReqVO;
 import cn.lycoder.boot.module.system.controller.admin.user.vo.UserUpdateReqVO;
@@ -114,6 +115,23 @@ public class UserServiceImpl implements UserService {
     public SystemUserDO getUser(Long userId) {
         // 详情按主键查询，交由权限码控制访问，数据范围仅在列表生效
         return userMapper.selectById(userId);
+    }
+
+    @Override
+    @IgnoreDataPermission
+    public SystemUserDO getUserProfile(Long userId) {
+        // 自助场景必须能读到自己：自定义数据范围可能不含本部门，不能复用受拦截的 getUser
+        return validateUserExists(userId);
+    }
+
+    @Override
+    @IgnoreDataPermission
+    public void updateUserProfile(Long userId, UserProfileUpdateReqVO reqVO) {
+        validateUserExists(userId);
+        // 只带四个自助字段（convert 产物其余列 null 被 updateById 跳过），主键显式设定防伪造
+        SystemUserDO updateObj = userConvert.convert(reqVO);
+        updateObj.setUserId(userId);
+        userMapper.updateById(updateObj);
     }
 
     @Override

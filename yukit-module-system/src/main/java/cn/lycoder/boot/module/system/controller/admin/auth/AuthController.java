@@ -5,12 +5,17 @@ import cn.lycoder.boot.framework.common.operatelog.OperationType;
 import cn.lycoder.boot.framework.common.pojo.Result;
 import cn.lycoder.boot.framework.protection.ratelimiter.LimitType;
 import cn.lycoder.boot.framework.protection.ratelimiter.RateLimiter;
+import cn.lycoder.boot.framework.security.core.util.SecurityFrameworkUtils;
 import cn.lycoder.boot.module.system.controller.admin.auth.vo.AuthCaptchaRespVO;
 import cn.lycoder.boot.module.system.controller.admin.auth.vo.AuthLoginReqVO;
 import cn.lycoder.boot.module.system.controller.admin.auth.vo.AuthLoginRespVO;
 import cn.lycoder.boot.module.system.controller.admin.auth.vo.AuthUpdatePasswordReqVO;
+import cn.lycoder.boot.module.system.controller.admin.auth.vo.UserProfileRespVO;
+import cn.lycoder.boot.module.system.controller.admin.auth.vo.UserProfileUpdateReqVO;
+import cn.lycoder.boot.module.system.convert.user.UserConvert;
 import cn.lycoder.boot.module.system.service.auth.AuthService;
 import cn.lycoder.boot.module.system.service.captcha.CaptchaService;
+import cn.lycoder.boot.module.system.service.user.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
@@ -34,6 +39,8 @@ public class AuthController {
 
     private final AuthService authService;
     private final CaptchaService captchaService;
+    private final UserService userService;
+    private final UserConvert userConvert;
 
     /**
      * 获取登录图形验证码
@@ -79,6 +86,27 @@ public class AuthController {
     @PutMapping("/update-password")
     public Result<Boolean> updatePassword(@RequestBody @Valid AuthUpdatePasswordReqVO reqVO) {
         authService.updatePassword(reqVO);
+        return Result.success(true);
+    }
+
+    /**
+     * 个人中心：我的资料（仅登录态，用户 ID 从会话取不信任请求）
+     */
+    @Operation(summary = "获取我的资料")
+    @GetMapping("/profile")
+    public Result<UserProfileRespVO> getProfile() {
+        return Result.success(userConvert.convertProfile(
+                userService.getUserProfile(SecurityFrameworkUtils.getLoginUserId())));
+    }
+
+    /**
+     * 个人中心：修改我的资料（昵称/邮箱/手机/性别，不涉及账号/部门/状态等管理字段）
+     */
+    @Operation(summary = "修改我的资料")
+    @OperationLog(module = "认证管理", name = "修改个人资料", type = OperationType.UPDATE)
+    @PutMapping("/profile")
+    public Result<Boolean> updateProfile(@RequestBody @Valid UserProfileUpdateReqVO reqVO) {
+        userService.updateUserProfile(SecurityFrameworkUtils.getLoginUserId(), reqVO);
         return Result.success(true);
     }
 }

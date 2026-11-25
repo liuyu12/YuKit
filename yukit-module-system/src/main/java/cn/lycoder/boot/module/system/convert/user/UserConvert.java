@@ -1,6 +1,8 @@
 package cn.lycoder.boot.module.system.convert.user;
 
 import cn.lycoder.boot.framework.common.pojo.PageResult;
+import cn.lycoder.boot.module.system.controller.admin.auth.vo.UserProfileRespVO;
+import cn.lycoder.boot.module.system.controller.admin.auth.vo.UserProfileUpdateReqVO;
 import cn.lycoder.boot.module.system.controller.admin.user.vo.UserCreateReqVO;
 import cn.lycoder.boot.module.system.controller.admin.user.vo.UserRespVO;
 import cn.lycoder.boot.module.system.controller.admin.user.vo.UserUpdateReqVO;
@@ -34,6 +36,14 @@ public interface UserConvert {
     SystemUserDO convert(UserCreateReqVO reqVO);
 
     SystemUserDO convert(UserUpdateReqVO reqVO);
+
+    /**
+     * 自助改资料：仅昵称/邮箱/手机/性别四字段，其余列保持 null 被 updateById 跳过；
+     * 主键由 Service 从会话取后显式设定，杜绝请求伪造
+     */
+    SystemUserDO convert(UserProfileUpdateReqVO reqVO);
+
+    UserProfileRespVO convertProfile(SystemUserDO user);
 
     UserRespVO convert(SystemUserDO user);
 
