@@ -80,4 +80,8 @@ public final class SystemErrorCodeConstants {
     public static final ErrorCode CONFIG_NOT_EXISTS = new ErrorCode(1002008000, "参数不存在");
     public static final ErrorCode CONFIG_KEY_EXISTS = new ErrorCode(1002008001, "参数键名已存在");
     public static final ErrorCode CONFIG_BUILT_IN_FORBIDDEN = new ErrorCode(1002008002, "内置参数不允许删除");
+
+    // ========== 公告管理模块 1-002-009-xxx ==========
+
+    public static final ErrorCode NOTICE_NOT_EXISTS = new ErrorCode(1002009000, "公告不存在");
 }
