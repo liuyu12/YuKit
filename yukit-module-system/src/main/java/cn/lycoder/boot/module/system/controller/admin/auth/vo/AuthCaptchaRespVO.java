@@ -15,6 +15,13 @@ import lombok.NoArgsConstructor;
 public class AuthCaptchaRespVO {
 
     /**
+     * 验证码校验是否启用（总闸 AND 参数 sys.account.captchaEnabled），
+     * 登录页据此决定是否渲染验证码输入框；关闭时 uuid/图片为 null
+     */
+    @Schema(description = "验证码校验是否启用，登录页据此条件渲染", example = "true")
+    private Boolean captchaEnabled;
+
+    /**
      * 验证码唯一标识，登录时随验证码值一并回传，服务端据此从 Redis 取答案比对
      */
     @Schema(description = "验证码唯一标识，登录时随验证码值一并回传", example = "6ac11e7c0d27494882afe548895cc945")
