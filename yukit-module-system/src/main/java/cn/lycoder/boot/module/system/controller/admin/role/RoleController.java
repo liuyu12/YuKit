@@ -2,6 +2,7 @@ package cn.lycoder.boot.module.system.controller.admin.role;
 
 import cn.lycoder.boot.framework.common.pojo.PageResult;
 import cn.lycoder.boot.framework.common.pojo.Result;
+import cn.lycoder.boot.framework.protection.idempotent.Idempotent;
 import cn.lycoder.boot.module.system.controller.admin.role.vo.RoleAssignMenuReqVO;
 import cn.lycoder.boot.module.system.controller.admin.role.vo.RoleCreateReqVO;
 import cn.lycoder.boot.module.system.controller.admin.role.vo.RolePageReqVO;
@@ -45,6 +46,7 @@ public class RoleController {
      * 创建角色（可携带 menuIds 一并授权）
      */
     @Operation(summary = "创建角色（可携带 menuIds 一并授权）")
+    @Idempotent(timeout = 3, message = "请勿重复提交")
     @PostMapping
     @SaCheckPermission("system:role:create")
     public Result<Long> createRole(@RequestBody @Valid RoleCreateReqVO reqVO) {

@@ -3,6 +3,7 @@ package cn.lycoder.boot.module.system.controller.admin.dept;
 import cn.lycoder.boot.framework.common.operatelog.OperationLog;
 import cn.lycoder.boot.framework.common.operatelog.OperationType;
 import cn.lycoder.boot.framework.common.pojo.Result;
+import cn.lycoder.boot.framework.protection.idempotent.Idempotent;
 import cn.lycoder.boot.module.system.controller.admin.dept.vo.DeptCreateReqVO;
 import cn.lycoder.boot.module.system.controller.admin.dept.vo.DeptListReqVO;
 import cn.lycoder.boot.module.system.controller.admin.dept.vo.DeptRespVO;
@@ -45,6 +46,7 @@ public class DeptController {
      */
     @Operation(summary = "创建部门")
     @OperationLog(module = "部门管理", name = "创建部门", type = OperationType.INSERT)
+    @Idempotent(timeout = 3, message = "请勿重复提交")
     @PostMapping
     @SaCheckPermission("system:dept:create")
     public Result<Long> createDept(@RequestBody @Valid DeptCreateReqVO reqVO) {

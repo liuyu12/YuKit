@@ -4,6 +4,7 @@ import cn.lycoder.boot.framework.common.operatelog.OperationLog;
 import cn.lycoder.boot.framework.common.operatelog.OperationType;
 import cn.lycoder.boot.framework.common.pojo.PageResult;
 import cn.lycoder.boot.framework.common.pojo.Result;
+import cn.lycoder.boot.framework.protection.idempotent.Idempotent;
 import cn.lycoder.boot.module.system.controller.admin.user.vo.UserCreateReqVO;
 import cn.lycoder.boot.module.system.controller.admin.user.vo.UserPageReqVO;
 import cn.lycoder.boot.module.system.controller.admin.user.vo.UserResetPasswordReqVO;
@@ -48,6 +49,7 @@ public class UserController {
      * 创建用户
      */
     @Operation(summary = "创建用户")
+    @Idempotent(timeout = 3, message = "请勿重复提交")
     @PostMapping
     @SaCheckPermission("system:user:create")
     public Result<Long> createUser(@RequestBody @Valid UserCreateReqVO reqVO) {

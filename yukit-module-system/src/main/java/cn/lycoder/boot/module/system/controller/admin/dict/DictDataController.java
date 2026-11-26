@@ -2,6 +2,7 @@ package cn.lycoder.boot.module.system.controller.admin.dict;
 
 import cn.lycoder.boot.framework.common.pojo.PageResult;
 import cn.lycoder.boot.framework.common.pojo.Result;
+import cn.lycoder.boot.framework.protection.idempotent.Idempotent;
 import cn.lycoder.boot.module.system.controller.admin.dict.vo.DictDataCreateReqVO;
 import cn.lycoder.boot.module.system.controller.admin.dict.vo.DictDataPageReqVO;
 import cn.lycoder.boot.module.system.controller.admin.dict.vo.DictDataRespVO;
@@ -44,6 +45,7 @@ public class DictDataController {
      * 创建字典数据
      */
     @Operation(summary = "创建字典数据")
+    @Idempotent(timeout = 3, message = "请勿重复提交")
     @PostMapping
     @SaCheckPermission("system:dict:create")
     public Result<Long> createDictData(@RequestBody @Valid DictDataCreateReqVO reqVO) {

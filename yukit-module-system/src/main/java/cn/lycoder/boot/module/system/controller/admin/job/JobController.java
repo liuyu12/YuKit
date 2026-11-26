@@ -5,6 +5,7 @@ import cn.lycoder.boot.framework.common.operatelog.OperationLog;
 import cn.lycoder.boot.framework.common.operatelog.OperationType;
 import cn.lycoder.boot.framework.common.pojo.PageResult;
 import cn.lycoder.boot.framework.common.pojo.Result;
+import cn.lycoder.boot.framework.protection.idempotent.Idempotent;
 import cn.lycoder.boot.module.system.controller.admin.job.vo.JobCreateReqVO;
 import cn.lycoder.boot.module.system.controller.admin.job.vo.JobPageReqVO;
 import cn.lycoder.boot.module.system.controller.admin.job.vo.JobRespVO;
@@ -48,6 +49,7 @@ public class JobController {
 
     @Operation(summary = "创建定时任务")
     @OperationLog(module = "定时任务", name = "创建定时任务", type = OperationType.INSERT)
+    @Idempotent(timeout = 3, message = "请勿重复提交")
     @PostMapping
     @SaCheckPermission("monitor:job:add")
     public Result<Long> createJob(@Valid @RequestBody JobCreateReqVO reqVO) {

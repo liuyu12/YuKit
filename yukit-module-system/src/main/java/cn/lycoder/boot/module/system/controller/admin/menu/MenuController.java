@@ -1,6 +1,7 @@
 package cn.lycoder.boot.module.system.controller.admin.menu;
 
 import cn.lycoder.boot.framework.common.pojo.Result;
+import cn.lycoder.boot.framework.protection.idempotent.Idempotent;
 import cn.lycoder.boot.module.system.controller.admin.menu.vo.MenuCreateReqVO;
 import cn.lycoder.boot.module.system.controller.admin.menu.vo.MenuListReqVO;
 import cn.lycoder.boot.module.system.controller.admin.menu.vo.MenuRespVO;
@@ -43,6 +44,7 @@ public class MenuController {
      * 创建菜单
      */
     @Operation(summary = "创建菜单")
+    @Idempotent(timeout = 3, message = "请勿重复提交")
     @PostMapping
     @SaCheckPermission("system:menu:create")
     public Result<Long> createMenu(@RequestBody @Valid MenuCreateReqVO reqVO) {

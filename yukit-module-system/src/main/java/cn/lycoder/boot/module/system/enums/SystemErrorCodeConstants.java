@@ -95,4 +95,12 @@ public final class SystemErrorCodeConstants {
     public static final ErrorCode POST_CODE_DUPLICATE = new ErrorCode(1002010001, "岗位编码已存在");
     public static final ErrorCode POST_NAME_DUPLICATE = new ErrorCode(1002010002, "岗位名称已存在");
     public static final ErrorCode POST_IN_USE = new ErrorCode(1002010003, "岗位已分配给用户，无法删除");
+
+    // ========== 通用数据完整性 1-002-099-xxx ==========
+
+    /**
+     * 唯一索引冲突的兜底码：仅当冲突索引不在 {@code DuplicateKeyExceptionHandler} 的已知映射表内时使用。
+     * 已知索引都会翻译成对应的业务码（如 {@link #USER_NAME_EXISTS}），保证并发竞态与预校验返回同一个码
+     */
+    public static final ErrorCode DATA_UNIQUE_CONFLICT = new ErrorCode(1002099000, "数据已存在，请刷新后重试");
 }
