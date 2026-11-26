@@ -129,28 +129,49 @@ public class JobRunner implements Runnable {
             return value;
         }
         if (value instanceof Number n) {
-            if (targetType == int.class || targetType == Integer.class) {
-                return n.intValue();
-            }
-            if (targetType == long.class || targetType == Long.class) {
-                return n.longValue();
-            }
-            if (targetType == double.class || targetType == Double.class) {
-                return n.doubleValue();
-            }
-            if (targetType == float.class || targetType == Float.class) {
-                return n.floatValue();
+            Object narrowed = coerceNumber(n, targetType);
+            if (narrowed != null) {
+                return narrowed;
             }
         }
-        if (value instanceof Boolean b) {
-            if (targetType == boolean.class || targetType == Boolean.class) {
-                return b;
-            }
+        if (value instanceof Boolean b && matches(targetType, boolean.class, Boolean.class)) {
+            return b;
         }
         if (targetType == String.class) {
             return String.valueOf(value);
         }
         return value;
+    }
+
+    /**
+     * 数值字面量按目标类型收窄；目标类型不在支持列表时返回 {@code null}，由调用方继续走兜底分支
+     */
+    private static Object coerceNumber(Number n, Class<?> targetType) {
+        if (matches(targetType, int.class, Integer.class)) {
+            return n.intValue();
+        }
+        if (matches(targetType, long.class, Long.class)) {
+            return n.longValue();
+        }
+        if (matches(targetType, double.class, Double.class)) {
+            return n.doubleValue();
+        }
+        if (matches(targetType, float.class, Float.class)) {
+            return n.floatValue();
+        }
+        return null;
+    }
+
+    /**
+     * 目标类型是否为候选之一（基本类型与其包装类型等价对待）
+     */
+    private static boolean matches(Class<?> targetType, Class<?>... candidates) {
+        for (Class<?> candidate : candidates) {
+            if (targetType == candidate) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static long elapsed(long startNanos) {
