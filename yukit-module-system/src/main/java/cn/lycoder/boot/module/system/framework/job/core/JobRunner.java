@@ -158,19 +158,19 @@ public class JobRunner implements Runnable {
     }
 
     private void writeLog(LocalDateTime start, long durationMs, String status, String exceptionInfo) {
-        SystemJobLogDO record = new SystemJobLogDO();
-        record.setJobId(job.getJobId());
-        record.setJobName(job.getJobName());
-        record.setJobGroup(job.getJobGroup());
-        record.setInvokeTarget(job.getInvokeTarget());
-        record.setJobMessage(String.format(SUCCESS_MSG_PATTERN, durationMs));
-        record.setStatus(status);
-        record.setExceptionInfo(exceptionInfo);
-        record.setStartTime(start);
-        record.setEndTime(start.plusNanos(durationMs * 1_000_000L));
-        record.setDurationMs(durationMs);
+        SystemJobLogDO jobLog = new SystemJobLogDO();
+        jobLog.setJobId(job.getJobId());
+        jobLog.setJobName(job.getJobName());
+        jobLog.setJobGroup(job.getJobGroup());
+        jobLog.setInvokeTarget(job.getInvokeTarget());
+        jobLog.setJobMessage(String.format(SUCCESS_MSG_PATTERN, durationMs));
+        jobLog.setStatus(status);
+        jobLog.setExceptionInfo(exceptionInfo);
+        jobLog.setStartTime(start);
+        jobLog.setEndTime(start.plusNanos(durationMs * 1_000_000L));
+        jobLog.setDurationMs(durationMs);
         try {
-            jobLogService.createJobLog(record);
+            jobLogService.createJobLog(jobLog);
         } catch (Exception e) {
             // 日志写失败不能影响主任务，只打 warn
             log.warn("[JobRunner] 写调度日志失败 jobId={}", job.getJobId(), e);
@@ -179,19 +179,19 @@ public class JobRunner implements Runnable {
 
     private void recordSkipped() {
         LocalDateTime now = LocalDateTime.now(clock);
-        SystemJobLogDO record = new SystemJobLogDO();
-        record.setJobId(job.getJobId());
-        record.setJobName(job.getJobName());
-        record.setJobGroup(job.getJobGroup());
-        record.setInvokeTarget(job.getInvokeTarget());
-        record.setJobMessage(SKIPPED_MSG);
-        record.setStatus(SystemJobLogDO.STATUS_SUCCESS);
-        record.setExceptionInfo("");
-        record.setStartTime(now);
-        record.setEndTime(now);
-        record.setDurationMs(0L);
+        SystemJobLogDO jobLog = new SystemJobLogDO();
+        jobLog.setJobId(job.getJobId());
+        jobLog.setJobName(job.getJobName());
+        jobLog.setJobGroup(job.getJobGroup());
+        jobLog.setInvokeTarget(job.getInvokeTarget());
+        jobLog.setJobMessage(SKIPPED_MSG);
+        jobLog.setStatus(SystemJobLogDO.STATUS_SUCCESS);
+        jobLog.setExceptionInfo("");
+        jobLog.setStartTime(now);
+        jobLog.setEndTime(now);
+        jobLog.setDurationMs(0L);
         try {
-            jobLogService.createJobLog(record);
+            jobLogService.createJobLog(jobLog);
         } catch (Exception e) {
             log.warn("[JobRunner] 写跳过日志失败 jobId={}", job.getJobId(), e);
         }

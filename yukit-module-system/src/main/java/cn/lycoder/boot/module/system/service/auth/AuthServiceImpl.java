@@ -159,7 +159,7 @@ public class AuthServiceImpl implements AuthService {
     /**
      * 写入登录日志：审计失败绝不影响登录主流程
      * <p>
-     * 命名避开 record——Java 16+ 受限标识符，用作方法名易与记录类声明混淆（Sonar S1201）
+     * 命名避开裸 record——它自 Java 16 起是受限标识符（JLS 3.9），用作方法名易与记录类声明混淆
      */
     private void recordLoginLog(Long userId, String username, LoginResultTypeEnum result,
                                 String msg, String clientIp, String userAgent) {

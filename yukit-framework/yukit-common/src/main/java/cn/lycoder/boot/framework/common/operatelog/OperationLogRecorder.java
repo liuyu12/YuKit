@@ -8,14 +8,17 @@ package cn.lycoder.boot.framework.common.operatelog;
  * 保证「未接持久化」不影响业务，也避免 web starter 反向依赖具体存储实现。
  * <p>
  * 与 {@code DictValueProvider}、{@code OperatorSupplier} 同属项目的 SPI 解耦约定。
+ * <p>
+ * 方法名用 {@code write} 而非 {@code record}：后者自 Java 16 起是受限标识符（JLS 3.9），
+ * 虽然用作方法名/变量名仍能编译，但与记录类声明易混淆，IDE/Sonar 均会告警。
  */
 @FunctionalInterface
 public interface OperationLogRecorder {
 
     /**
-     * 记录一条操作日志。实现方需自行保证不抛出异常中断业务（切面已做兜底，但实现也应健壮）。
+     * 输出一条操作日志。实现方需自行保证不抛出异常中断业务（切面已做兜底，但实现也应健壮）。
      *
-     * @param record 采集完成的日志记录
+     * @param operationLog 采集完成的日志记录
      */
-    void record(OperationLogRecord record);
+    void write(OperationLogRecord operationLog);
 }

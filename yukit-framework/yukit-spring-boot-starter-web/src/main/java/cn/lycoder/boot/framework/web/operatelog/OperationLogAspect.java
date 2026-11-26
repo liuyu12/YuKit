@@ -86,9 +86,10 @@ public class OperationLogAspect {
             throw ex;
         } finally {
             try {
-                OperationLogRecord record = buildRecord(joinPoint, operationLog, operator,
+                // 局部变量命名用 logRecord：operationLog 已被注解决收入参占用，record 则是 Java 16+ 受限标识符
+                OperationLogRecord logRecord = buildRecord(joinPoint, operationLog, operator,
                         result, error, startTime, (System.nanoTime() - startNanos) / 1_000_000);
-                recorder.record(record);
+                recorder.write(logRecord);
             } catch (Exception e) {
                 log.warn("操作日志记录失败: {}", e.getMessage());
             }
@@ -98,40 +99,40 @@ public class OperationLogAspect {
     private OperationLogRecord buildRecord(ProceedingJoinPoint joinPoint, OperationLog annotation, String operator,
                                            Object result, Throwable error,
                                            LocalDateTime startTime, long durationMs) {
-        OperationLogRecord record = new OperationLogRecord();
-        record.setTraceId(MDC.get(AccessLogFilter.TRACE_ID_KEY));
-        record.setType(annotation.type().getCode());
-        record.setModule(annotation.module());
-        record.setName(annotation.name());
-        record.setOperator(operator);
-        record.setJavaMethod(joinPoint.getSignature().getDeclaringType().getSimpleName()
+        OperationLogRecord logRecord = new OperationLogRecord();
+        logRecord.setTraceId(MDC.get(AccessLogFilter.TRACE_ID_KEY));
+        logRecord.setType(annotation.type().getCode());
+        logRecord.setModule(annotation.module());
+        logRecord.setName(annotation.name());
+        logRecord.setOperator(operator);
+        logRecord.setJavaMethod(joinPoint.getSignature().getDeclaringType().getSimpleName()
                 + "." + joinPoint.getSignature().getName());
-        record.setStartTime(startTime);
-        record.setDurationMs(durationMs);
+        logRecord.setStartTime(startTime);
+        logRecord.setDurationMs(durationMs);
 
         // 请求上下文（非 Web 线程时可能为空，做好降级）
         HttpServletRequest request = currentRequest();
         if (request != null) {
-            record.setRequestMethod(request.getMethod());
-            record.setRequestUrl(request.getRequestURI());
-            record.setUserIp(resolveClientIp(request));
-            record.setUserAgent(truncate(request.getHeader("User-Agent"), MAX_USER_AGENT_LENGTH));
+            logRecord.setRequestMethod(request.getMethod());
+            logRecord.setRequestUrl(request.getRequestURI());
+            logRecord.setUserIp(resolveClientIp(request));
+            logRecord.setUserAgent(truncate(request.getHeader("User-Agent"), MAX_USER_AGENT_LENGTH));
         }
 
         boolean success = error == null;
-        record.setStatus(success ? 0 : 1);
+        logRecord.setStatus(success ? 0 : 1);
         if (!success) {
-            record.setErrorMsg(truncate(error.getClass().getSimpleName() + ": " + error.getMessage(),
+            logRecord.setErrorMsg(truncate(error.getClass().getSimpleName() + ": " + error.getMessage(),
                     MAX_CONTENT_LENGTH));
         }
 
         if (annotation.recordParams()) {
-            record.setJavaMethodParam(serializeArgs(joinPoint.getArgs()));
+            logRecord.setJavaMethodParam(serializeArgs(joinPoint.getArgs()));
         }
         if (annotation.recordResult() && success) {
-            record.setJavaMethodResult(serializeResult(result));
+            logRecord.setJavaMethodResult(serializeResult(result));
         }
-        return record;
+        return logRecord;
     }
 
     /**

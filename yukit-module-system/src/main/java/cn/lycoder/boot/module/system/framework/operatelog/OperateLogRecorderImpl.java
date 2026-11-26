@@ -31,13 +31,13 @@ public class OperateLogRecorderImpl implements OperationLogRecorder {
     private final Clock clock;
 
     @Override
-    public void record(OperationLogRecord record) {
-        if (record == null) {
+    public void write(OperationLogRecord operationLog) {
+        if (operationLog == null) {
             return;
         }
         try {
             SystemOperateLogDO logDO = new SystemOperateLogDO();
-            BeanUtils.copyProperties(record, logDO);
+            BeanUtils.copyProperties(operationLog, logDO);
             logDO.setCreateTime(LocalDateTime.now(clock));
             operateLogMapper.insert(logDO);
         } catch (Exception e) {
