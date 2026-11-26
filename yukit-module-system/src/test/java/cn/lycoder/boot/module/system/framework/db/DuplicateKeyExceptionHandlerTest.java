@@ -66,6 +66,18 @@ class DuplicateKeyExceptionHandlerTest {
                 .isEqualTo(SystemErrorCodeConstants.JOB_NAME_GROUP_DUPLICATE.getCode());
     }
 
+    /**
+     * 守卫测试（UniqueIndexRegistrationTest）只比索引名对不对齐，不比映射目标；
+     * 误登成 ROLE_KEY_EXISTS 那边不会报，由本条补上。本例用 MySQL 8 真实报文形态（带表名前缀）
+     */
+    @Test
+    @DisplayName("V12 角色名称索引：译为 ROLE_NAME_EXISTS")
+    void mapsRoleNameIndex() {
+        assertThat(handler.handleDuplicateKey(
+                duplicate("Duplicate entry '运营' for key 'sys_role.uk_sys_role_active_name'")).getCode())
+                .isEqualTo(SystemErrorCodeConstants.ROLE_NAME_EXISTS.getCode());
+    }
+
     @Test
     @DisplayName("未登记的索引名落兜底码，不抛异常也不返回 500")
     void fallsBackForUnknownIndex() {

@@ -39,22 +39,25 @@ public class DuplicateKeyExceptionHandler {
     private static final Pattern INDEX_NAME_PATTERN = Pattern.compile("for key '([^']+)'");
 
     /**
-     * 冲突索引名 → 业务错误码。新增唯一索引时在此登记，未登记的落到兜底码
+     * 冲突索引名 → 业务错误码。新增唯一索引时在此登记，未登记的落到兜底码；
+     * 两边是否对齐由 {@code UniqueIndexRegistrationTest} 扫描迁移脚本守住。
+     * <p>
+     * 用 {@link Map#ofEntries} 而非 {@code Map.of}：后者最多受理 10 对键值，
+     * 登记数量超过时会直接编译失败
      */
-    private static final Map<String, ErrorCode> INDEX_ERROR_CODES = Map.of(
-            // V11：逻辑删除表用生成列，仅约束未删行
-            "uk_sys_user_active_name", SystemErrorCodeConstants.USER_NAME_EXISTS,
-            "uk_sys_role_active_key", SystemErrorCodeConstants.ROLE_KEY_EXISTS,
-            "uk_sys_dept_active_parent_name", SystemErrorCodeConstants.DEPT_NAME_EXISTS,
-            // V11：物理删除表，直接全局唯一
-            "uk_sys_post_name", SystemErrorCodeConstants.POST_NAME_DUPLICATE,
-            "uk_sys_dict_data_type_value", SystemErrorCodeConstants.DICT_DATA_DUPLICATE,
-            "uk_sys_menu_parent_name", SystemErrorCodeConstants.MENU_NAME_EXISTS,
-            // V1/V6/V9 既有唯一索引，此前无兜底，一并纳入
-            "uk_sys_config_key", SystemErrorCodeConstants.CONFIG_KEY_EXISTS,
-            "dict_type", SystemErrorCodeConstants.DICT_TYPE_DUPLICATE,
-            "uk_sys_job_name_group", SystemErrorCodeConstants.JOB_NAME_GROUP_DUPLICATE,
-            "uk_sys_post_code", SystemErrorCodeConstants.POST_CODE_DUPLICATE);
+    private static final Map<String, ErrorCode> INDEX_ERROR_CODES = Map.ofEntries(
+            Map.entry("uk_sys_user_active_name", SystemErrorCodeConstants.USER_NAME_EXISTS),
+            Map.entry("uk_sys_role_active_key", SystemErrorCodeConstants.ROLE_KEY_EXISTS),
+            // V12：角色名称补齐与岗位对齐
+            Map.entry("uk_sys_role_active_name", SystemErrorCodeConstants.ROLE_NAME_EXISTS),
+            Map.entry("uk_sys_dept_active_parent_name", SystemErrorCodeConstants.DEPT_NAME_EXISTS),
+            Map.entry("uk_sys_post_name", SystemErrorCodeConstants.POST_NAME_DUPLICATE),
+            Map.entry("uk_sys_dict_data_type_value", SystemErrorCodeConstants.DICT_DATA_DUPLICATE),
+            Map.entry("uk_sys_menu_parent_name", SystemErrorCodeConstants.MENU_NAME_EXISTS),
+            Map.entry("uk_sys_config_key", SystemErrorCodeConstants.CONFIG_KEY_EXISTS),
+            Map.entry("dict_type", SystemErrorCodeConstants.DICT_TYPE_DUPLICATE),
+            Map.entry("uk_sys_job_name_group", SystemErrorCodeConstants.JOB_NAME_GROUP_DUPLICATE),
+            Map.entry("uk_sys_post_code", SystemErrorCodeConstants.POST_CODE_DUPLICATE));
 
     /**
      * 唯一键冲突：译为对应业务错误码，HTTP 200 + 业务 code，与 Service 预校验保持一致

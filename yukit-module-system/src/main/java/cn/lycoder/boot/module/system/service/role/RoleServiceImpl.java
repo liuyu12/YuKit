@@ -22,6 +22,7 @@ import org.springframework.util.StringUtils;
 import java.util.List;
 
 import static cn.lycoder.boot.module.system.enums.SystemErrorCodeConstants.ROLE_KEY_EXISTS;
+import static cn.lycoder.boot.module.system.enums.SystemErrorCodeConstants.ROLE_NAME_EXISTS;
 import static cn.lycoder.boot.module.system.enums.SystemErrorCodeConstants.ROLE_NOT_EXISTS;
 
 /**
@@ -44,8 +45,9 @@ public class RoleServiceImpl implements RoleService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long createRole(RoleCreateReqVO reqVO) {
-        // 1. 校验权限字符唯一
+        // 1. 校验权限字符、角色名称唯一
         validateRoleKeyUnique(reqVO.getRoleKey(), null);
+        validateRoleNameUnique(reqVO.getRoleName(), null);
         // 2. ReqVO → DO
         SystemRoleDO role = roleConvert.convert(reqVO);
         role.setDataScope("1");
@@ -66,6 +68,7 @@ public class RoleServiceImpl implements RoleService {
         SystemRoleDO role = validateRoleExists(reqVO.getRoleId());
         validateSuperAdmin(role);
         validateRoleKeyUnique(reqVO.getRoleKey(), reqVO.getRoleId());
+        validateRoleNameUnique(reqVO.getRoleName(), reqVO.getRoleId());
         roleMapper.updateById(roleConvert.convert(reqVO));
     }
 
@@ -143,6 +146,19 @@ public class RoleServiceImpl implements RoleService {
                 .ne(excludeRoleId != null, SystemRoleDO::getRoleId, excludeRoleId));
         if (count != null && count > 0) {
             throw new ServiceException(ROLE_KEY_EXISTS);
+        }
+    }
+
+    /**
+     * 角色名称唯一（与岗位 code+name 双唯一对齐）。并发撞库由
+     * {@code uk_sys_role_active_name}（V12 生成列）兜底，撞库后回同样的业务码
+     */
+    private void validateRoleNameUnique(String roleName, Long excludeRoleId) {
+        Long count = roleMapper.selectCount(Wrappers.<SystemRoleDO>lambdaQuery()
+                .eq(SystemRoleDO::getRoleName, roleName)
+                .ne(excludeRoleId != null, SystemRoleDO::getRoleId, excludeRoleId));
+        if (count != null && count > 0) {
+            throw new ServiceException(ROLE_NAME_EXISTS);
         }
     }
 }

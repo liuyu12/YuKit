@@ -113,6 +113,13 @@ public class JobServiceImpl implements JobService {
     @Override
     public void runJob(Long jobId) {
         SystemJobDO job = requireJob(jobId);
+        // 手动触发是异步提交的：runOnce 把 runner 丢进线程池后立即返回，跳过只会记在
+        // sys_job_log 里，操作人永远看到成功。因此在提交前预判一次，把“任务禁止并发且正在执行”
+        // 即时反馈给调用方。预判与执行之间存在窗口，并发正确性仍由 JobRunner 的 CAS 守住
+        if (SystemJobDO.CONCURRENT_FORBID.equals(job.getConcurrent())
+                && jobScheduler.isRunning(job.getJobId())) {
+            throw new ServiceException(SystemErrorCodeConstants.JOB_RUNNING_FORBID_CONCURRENT);
+        }
         jobScheduler.runOnce(job);
     }
 

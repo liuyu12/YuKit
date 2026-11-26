@@ -4,6 +4,7 @@ import cn.lycoder.boot.framework.common.exception.ServiceException;
 import cn.lycoder.boot.module.system.controller.admin.job.vo.JobCreateReqVO;
 import cn.lycoder.boot.module.system.dal.dataobject.job.SystemJobDO;
 import cn.lycoder.boot.module.system.dal.mapper.job.SystemJobMapper;
+import cn.lycoder.boot.module.system.enums.SystemErrorCodeConstants;
 import cn.lycoder.boot.module.system.framework.job.annotation.JobHandler;
 import cn.lycoder.boot.module.system.framework.job.core.JobScheduler;
 import org.junit.jupiter.api.BeforeEach;
@@ -172,5 +173,43 @@ class JobServiceImplTest {
         assertThat(service.getNextFireTime("0 0 3 * * ?")).isNotNull();
         assertThat(service.getNextFireTime("bad")).isNull();
         assertThat(service.getNextFireTime(null)).isNull();
+    }
+
+    @Test
+    @DisplayName("runJob：禁止并发且正在执行 → 提交前拦截并抛业务码")
+    void rejectsRunWhenForbiddenAndRunning() {
+        stubJob(SystemJobDO.CONCURRENT_FORBID);
+        when(jobScheduler.isRunning(1L)).thenReturn(true);
+        assertThatThrownBy(() -> service.runJob(1L))
+                .isInstanceOf(ServiceException.class)
+                .extracting(e -> ((ServiceException) e).getCode())
+                .isEqualTo(SystemErrorCodeConstants.JOB_RUNNING_FORBID_CONCURRENT.getCode());
+        // 被拦下就不能再提交，否则仍会多出一条 skipped 日志
+        verify(jobScheduler, never()).runOnce(any());
+    }
+
+    @Test
+    @DisplayName("runJob：禁止并发但未在跑 → 正常提交")
+    void runsWhenForbiddenButIdle() {
+        stubJob(SystemJobDO.CONCURRENT_FORBID);
+        when(jobScheduler.isRunning(1L)).thenReturn(false);
+        service.runJob(1L);
+        verify(jobScheduler).runOnce(any(SystemJobDO.class));
+    }
+
+    @Test
+    @DisplayName("runJob：允许并发的任务即使在跑也照常提交（不去读 isRunning）")
+    void runsWhenConcurrentAllowed() {
+        stubJob(SystemJobDO.CONCURRENT_ALLOW);
+        service.runJob(1L);
+        verify(jobScheduler).runOnce(any(SystemJobDO.class));
+        verify(jobScheduler, never()).isRunning(any());
+    }
+
+    private void stubJob(String concurrent) {
+        SystemJobDO job = new SystemJobDO();
+        job.setJobId(1L);
+        job.setConcurrent(concurrent);
+        when(jobMapper.selectById(1L)).thenReturn(job);
     }
 }

@@ -93,6 +93,17 @@ public class JobScheduler {
         jobTaskScheduler.execute(runner);
     }
 
+    /**
+     * 任务当前是否正在执行，读的是与 {@link JobRunner} 共享的那份 runningFlags
+     * <p>
+     * 仅供调用方做即时反馈：本方法不构成“读完就能提交”的保证，
+     * 真正的并发约束由 {@code JobRunner} 里的 CAS 完成
+     */
+    public boolean isRunning(Long jobId) {
+        AtomicBoolean flag = runningFlags.get(jobId);
+        return flag != null && flag.get();
+    }
+
     private void cancelFuture(Long jobId) {
         ScheduledFuture<?> old = futures.remove(jobId);
         if (old != null && !old.isCancelled()) {

@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * 缓存监控：Redis 运行指标与 key 运维（对齐菜单 113 缓存监控 / 114 缓存列表）
+ * 缓存监控：Redis 运行指标与 key 运维（四个接口共用权限码 monitor:cache:list，对应菜单 113）
  */
 @Tag(name = "缓存监控")
 @RestController
