@@ -36,6 +36,14 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-autoconfigure</artifactId>
         </dependency>
+
+        <!-- JSpecify 空安全注解：Spring 7 的包已打上 @NullMarked，覆写形参需显式标注。
+             虽然它已随 spring-boot-starter-web → spring-core 传递可用，但本模块直接引用了该注解，
+             按“依赖由真正用到的模块自己声明”显式声明；版本由 Boot BOM 托管（与 spring-core 所需一致） -->
+        <dependency>
+            <groupId>org.jspecify</groupId>
+            <artifactId>jspecify</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

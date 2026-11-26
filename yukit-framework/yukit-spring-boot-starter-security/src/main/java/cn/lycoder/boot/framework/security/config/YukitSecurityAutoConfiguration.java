@@ -6,6 +6,7 @@ import cn.lycoder.boot.framework.security.core.operator.SaTokenOperatorSupplier;
 import cn.dev33.satoken.interceptor.SaInterceptor;
 import cn.dev33.satoken.router.SaRouter;
 import cn.dev33.satoken.stp.StpUtil;
+import org.jspecify.annotations.NonNull;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -32,7 +33,7 @@ public class YukitSecurityAutoConfiguration {
     public WebMvcConfigurer saTokenWebMvcConfigurer(YukitSecurityProperties properties) {
         return new WebMvcConfigurer() {
             @Override
-            public void addInterceptors(InterceptorRegistry registry) {
+            public void addInterceptors(@NonNull InterceptorRegistry registry) {
                 String[] excludePaths = properties.getExcludePaths().toArray(String[]::new);
                 registry.addInterceptor(new SaInterceptor(handle -> SaRouter
                                 .match("/**")

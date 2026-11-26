@@ -4,6 +4,7 @@ import cn.lycoder.boot.framework.common.security.OperatorSupplier;
 import cn.lycoder.boot.framework.web.filter.AccessLogFilter;
 import cn.lycoder.boot.framework.web.filter.AccessLogInterceptor;
 import jakarta.servlet.DispatcherType;
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -45,7 +46,7 @@ public class YukitAccessLogAutoConfiguration {
             YukitAccessLogProperties properties, ObjectProvider<OperatorSupplier> operatorSupplierProvider) {
         return new WebMvcConfigurer() {
             @Override
-            public void addInterceptors(InterceptorRegistry registry) {
+            public void addInterceptors(@NonNull InterceptorRegistry registry) {
                 registry.addInterceptor(new AccessLogInterceptor(properties, operatorSupplierProvider));
             }
         };

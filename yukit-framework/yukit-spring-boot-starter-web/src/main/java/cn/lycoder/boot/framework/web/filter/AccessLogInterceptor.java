@@ -5,6 +5,8 @@ import cn.lycoder.boot.framework.web.config.YukitAccessLogProperties;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.web.util.WebUtils;
@@ -44,8 +46,14 @@ public class AccessLogInterceptor implements HandlerInterceptor {
         this.operatorSupplierProvider = operatorSupplierProvider;
     }
 
+    /**
+     * 空安全标注跟 Spring 侧契约一致（javap 实测 HandlerInterceptor 的 TYPE 注解）：
+     * {@code org.springframework.web.servlet} 包已打上 @NullMarked，前三个形参默认非空；
+     * 只有 {@code ex} 被 Spring 显式标了 @Nullable（无异常时为 null），不得误标成 @NonNull
+     */
     @Override
-    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
+    public void afterCompletion(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
+                                @NonNull Object handler, @Nullable Exception ex) {
         try {
             Object startNanos = request.getAttribute(AccessLogFilter.ATTR_START_NANOS);
             if (!(startNanos instanceof Long start)) {
