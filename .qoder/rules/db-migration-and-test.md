@@ -18,9 +18,26 @@ glob: "**/*.sql,**/*Test.java,**/mapper/**/*.xml"
 - `ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci` + 表级 `COMMENT`
 - 审计列固定 `create_by` / `create_time` / `update_by` / `update_time` + `remark`
 - 状态列 `char(1)`，`0` 正常 / `1` 停用，注释标注字典 `sys_normal_disable`
-- 唯一约束 `UNIQUE KEY uk_<table>_<col>`；需并发兜底的业务列必须建唯一索引
+- 唯一约束的命名与并发兜底口径见下方「唯一约束」节（权威出处，不在其它文件复述清单）
 - 关联表（先例 `sys_user_role` / `sys_role_menu` / `sys_user_post`）用联合主键 + 反查列 `KEY idx_*`，不建外键、不加审计列
 - 种子数据要能让"删除被拒"等校验分支在冒烟中可复现
+
+## 唯一约束（并发兜底的权威出处）
+
+需并发兜底的业务列必须建 `UNIQUE KEY uk_<表>_<列>`，不留"只有 Service 层 selectCount"的活口：预校验挡不住查—插竞态，实测 8 个并发请求用同一 `role_key` 建角色，无唯一索引时**全部通过校验并落下 8 行重复数据**。
+
+已建索引的清单**以实查为准**，不在本文写死（会随迁移过期，且手写清单已经写错过表名）：
+
+```sql
+select table_name, index_name, group_concat(column_name order by seq_in_index) cols
+from information_schema.statistics
+where table_schema='yukit' and non_unique=0 and index_name<>'PRIMARY'
+group by table_name, index_name;
+```
+
+**逻辑删除表（`sys_user` / `sys_role` / `sys_dept`）禁止建全局唯一索引**：已删行会永久占位，反转"Service 经 `@TableLogic` 只数未删行、删除后名字允许重用"的现行语义，并让「创建→删除→重建同名」直接撞库。做法是 STORED 生成列 `CASE WHEN del_flag='0' THEN col END` 再对它建唯一索引——MySQL 不支持部分/过滤索引，而唯一索引允许多个 NULL，约束于是恰好只作用于未删行。先例 `V11__unique_constraints.sql`。生成列业务侧一律不读写：DO 不映射、INSERT 必须带显式列清单，否则报 `ERROR 3105`。复合唯一用并列生成列，不拼分隔符（`1-2x` 与 `2-x` 会歧义相撞）。
+
+撞上唯一键不得返回 500：`framework/db/DuplicateKeyExceptionHandler` 按 MySQL 报文里的索引名映射回预校验同款业务错误码，**新增唯一索引要在那里登记**，未登记的退化为通用码 `1002099000`。
 
 ## 逻辑删除语义（两套并存，勿混用）
 
@@ -48,4 +65,4 @@ glob: "**/*.sql,**/*Test.java,**/mapper/**/*.xml"
 - 静态方法用 `try (MockedStatic<T> m = mockStatic(X.class))`（mockito 5.x inline maker 默认可用，无需 mockito-inline）；涉及 `ProceedingJoinPoint.proceed()` 的测试方法签名须 `throws Throwable`。
 - 跑测试的命令与步骤先后见「交付流程与完成定义」；基线用例数实跑为准，不引用历史数字。
 
-> 最近核对：`114e4b2` / 2026-11-26
+> 最近核对：`bccd37a` / 2026-11-26

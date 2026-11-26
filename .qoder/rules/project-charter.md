@@ -18,6 +18,8 @@ trigger: always_on
 3. 密码、token 等敏感字段不得进审计日志；改密成功须 `kickout` 使全端下线——只失效当前 token 会留下旧端继续可用的越权窗口。
 4. 动态 `LIMIT`、排序字段等拼接只允许用 int 型变量，拼字符串即注入面。
 5. 跨全表的只读校验（账号唯一等）必须加 `@IgnoreDataPermission`，否则被部门数据范围静默截断。
+6. **冒烟与数据清理只允许连本地数据源**（默认 `jdbc:mysql://localhost:3306/yukit`，由 `MYSQL_HOST` / `MYSQL_PORT` / `MYSQL_DATABASE` 注入）。指向非本地库的 `DELETE`、`TRUNCATE`、Flyway clean 一律先停下确认，不因"配置看着像本地"而默许。
+7. 密码一律走 `SystemConfiguration` 装配的 `BCryptPasswordEncoder`（构造器注入 `PasswordEncoder`），禁止在 Service 内自建 encode / matches 实现或改换算法——存量密文会整体失效且难回滚。
 
 ## 协作协议
 
@@ -26,6 +28,7 @@ trigger: always_on
 - 结论要带证据：说"已确认"必须附验证方式；只做单向验证时明说"未做对照实验"；不确定就说不确定。
 - 库版本 API 判断先查代码或 jar 内类，不凭记忆——本项目已多次出现"记忆里是旧版方法名"。
 - 预计改动超过 200 行或跨 3 个以上模块时，先给方案再动手。
+- 后端功能收尾必须满足三条硬指标（细则见「交付流程与完成定义」）：拒绝分支断言具体错误码而非只看 200；改过兄弟模块先 `install` 再 `-pl`；收尾回读 `git status` 与相关表 `COUNT`/`MAX` 证明已清场。
 - 规则冲突或与代码实况不符时，以实况为准并提示我更新规则。
 
 ## 规则更新触发信号
@@ -47,4 +50,4 @@ trigger: always_on
 - `> 最近核对：<commit> / <日期>` 里的 commit 指**核对所依据的代码提交**，非规则文件自身提交。
 - 预算：`always_on` 合计控制在 3K 字符内——它是唯一每轮必注入的通道。
 
-> 最近核对：`114e4b2` / 2026-11-26
+> 最近核对：`bccd37a` / 2026-11-26

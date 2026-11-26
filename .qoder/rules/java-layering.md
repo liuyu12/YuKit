@@ -32,14 +32,18 @@ enums/SystemErrorCodeConstants.java              # 错误码集中登记
 1. **参与分页转换的 RespVO 必须 `implements Serializable`**：`PageResult.convert` 的泛型上界是 `<S extends Serializable, T extends Serializable>`，漏了编译报"类型参数不在范围 F 内"。
 2. `XxxUpdateReqVO extends XxxCreateReqVO`（先例：`PostUpdateReqVO`、`JobUpdateReqVO`），避免字段重复声明。
 3. 业务异常统一 `throw new ServiceException(XXX_YYY)`，错误码从 `SystemErrorCodeConstants` 引用，禁止内联数字码。
-4. 唯一性校验：Service 层 `selectCount` 并在更新时用 `.ne(excludeId != null, id, excludeId)` 排除自身，DB 唯一索引兜底并发窗口；先校验编码再校验名称。
+4. 唯一性校验：Service 层 `selectCount` 并在更新时用 `.ne(excludeId != null, id, excludeId)` 排除自身；先校验编码再校验名称。注意 `selectCount` 只能挡住串行重复，**挡不住并发竞态**，DB 侧的唯一索引与生成列做法见「数据库迁移与单测约定 · 唯一约束」（权威出处，本条不复述已建索引清单）。
 5. 引用完整性校验放 Service 层（如 `deletePost` 统计关联表后抛 `POST_IN_USE`），关联表不建外键。
 6. 全量覆盖式多对多保存：`@Transactional` 下先 `deleteByXxxId` 再 `insertBatch`；引用校验的删除位过滤口径见项目章程红线 1。
-7. Controller 只读端点不记 `@OperationLog`；写端点配 `@SaCheckPermission`，字典型 CRUD 的 create 加 `@Idempotent`（先例：config / dict / notice / post）。敏感接口用 `@OperationLog(recordParams = false)` 防明文入库。
+7. Controller 只读端点不记 `@OperationLog`；写端点配 `@SaCheckPermission`。create 是否加 `@Idempotent` 看一个判据：**重复提交会否产出重复行或撞唯一键**（已覆盖哪些端点以 `grep -rl Idempotent --include='*Controller.java'` 实查为准）。敏感接口用 `@OperationLog(recordParams = false)` 防明文入库。
 8. 自定义 SQL 与批量插入写进 `resources/mapper/<domain>/*.xml`，不在注解里拼 SQL；纯 CRUD 可只用 `BaseMapper`。
 9. 只读跨全表校验加 `@IgnoreDataPermission`（理由见项目章程红线 5）。
+10. **日期时间不在字段上逐一定制**：出站格式由 web starter 的 `YukitJacksonAutoConfiguration` 全局统一（`LocalDateTime` → `yyyy-MM-dd HH:mm:ss`、`LocalDate` → `yyyy-MM-dd`、`LocalTime` → `HH:mm:ss`），**禁止在 VO 字段加 `@JsonFormat` 覆盖**（现状 0 处，保持一致）；要改格式往那个类的常量去改，不在业务侧散写 `DateTimeFormatter`。
+11. **URL 风格**：单资源读写带路径变量（`PUT/DELETE /system/posts/{postId}`）；批量删除用裸路径 + id 集合（先例 `JobController.deleteJobByIds`）；动作型子资源用动词后缀（`PUT /system/users/{userId}/unlock`）；自助接口不挂权限码（`PUT /system/auth/update-password`）。
+12. **契约变更要保守**：已发布端点的请求/响应字段不得擅自删除或改名（前端与 Apifox 用例依赖）；新增必填字段要给默认值或先放宽校验再分步上线；分页入参统一 `XxxPageReqVO extends PageParam`（现状全部如此），不自造 `pageNo` / `pageSize` 字段。
+13. 类与公共方法用**中文** Javadoc 说明意图（先例 `SystemPostDO`），不写与代码重复的直译注释。
 
-## 库版本禁忌（写 Java 时就生效，别等测试阶段才发现）
+## 库版本禁忌（写 Java 时就生效，别等测试阶段才发现）     
 
 - **MyBatis-Plus**：不要用 `Wrappers.lambdaQuery().in(SFunction, coll)`——它在构建 wrapper 阶段就解析 lambda 列名，纯 Mockito 单测无 TableInfo 缓存会抛 `can not find lambda cache for this entity`（而 `.eq` / `.ne` 惰性到 SQL 生成期，所以不报错）。批量存在性校验改用 `selectBatchIds(ids).size()` 比对。
 - **Sa-Token 1.46**：`SaSession` 无 `getExpirationTime()`、`SaTokenDao` 无 `getTimeToLive()`；会话存活走 `SaManager.getSaTokenDao().getSessionTimeout(key)`，`NOT_VALUE_EXPIRE = -2` 表永不过期。key 用裸逻辑名（前缀由覆写的 `wrapKey` 负责），自带前缀会双重包裹导致永远 miss。
@@ -47,4 +51,4 @@ enums/SystemErrorCodeConstants.java              # 错误码集中登记
 - **事务代理边界**：`@Transactional` 只在 public 方法且走代理时生效，同类内部调用无效（全量覆盖写法见上方硬性约定 6）。
 - **时间源**：取当前时间走统一注入的 `Clock` Bean（由 web starter 提供），不直写 `LocalDate.now()` / `new Date()`。
 
-> 最近核对：`114e4b2` / 2026-11-26
+> 最近核对：`bccd37a` / 2026-11-26

@@ -12,7 +12,7 @@ glob: "**/*.java"
 1. **S109 魔法数字**：截断长度、列宽、单位换算抽 `private static final` 常量（参照 `OperationLogAspect.MAX_CONTENT_LENGTH`）。
 2. **S3077 懒加载缓存**：禁用 `volatile` 集合字段，改 `AtomicReference<T>` + `updateAndGet(cur -> cur != null ? cur : build())`，缓存内容须不可变（`Map.copyOf` / `Stream.toList`）。
 3. **多构造器 Bean**：两个以上构造器时，注入构造器必须显式 `@Autowired`。
-4. **S3776 认知复杂度**：主流程过长就拆私有 helper（参照 `AuthServiceImpl.login`）。
+4. **S3776 认知复杂度**：单方法复杂度接近 15（Sonar 默认阈值）就拆私有 helper（参照 `AuthServiceImpl.login` 拆 `rejectLocked` / `rejectBadCredentials`）。
 5. **S4790 弱哈希**：摘要用 SHA-256（`MessageDigest` + `HexFormat`），禁 MD5。
 6. **日志**：slf4j 参数化 `log.info("x={}", v)`，禁字符串拼接。
 7. **JDK API 优先**：向上取整用 `Math.ceilDiv`，不手写 `(n + 59) / 60`。
