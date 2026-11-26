@@ -9,7 +9,7 @@ glob: "**/*.sql,**/*Test.java,**/mapper/**/*.xml"
 
 ## Flyway 迁移
 
-位置 `yukit-module-system/src/main/resources/db/migration/`，命名 `V<N>__<snake_case>.sql`。取号前先 `ls` 该目录确认最新版本（本文写作时为 V10，会过期）；**禁止改动已发布脚本**（校验和不匹配会导致启动失败）。
+位置 `yukit-module-system/src/main/resources/db/migration/`，命名 `V<N>__<snake_case>.sql`。取号前先 `ls` 该目录确认最新版本（本文写作时为 V12，会过期）；**禁止改动已发布脚本**（校验和不匹配会导致启动失败）。
 
 影响迁移行为的配置（`yukit-server/src/main/resources/application.yml`）：`clean-disabled: true`、`baseline-on-migrate: true` + `baseline-version: 2`——存量非空库不重跑建表/种子，新空库则全量迁移。`locations` 的写法与 Flyway 依赖装配归「构建与配置约定」，本文件不重复。
 
@@ -37,7 +37,7 @@ group by table_name, index_name;
 
 **逻辑删除表（`sys_user` / `sys_role` / `sys_dept`）禁止建全局唯一索引**：已删行会永久占位，反转"Service 经 `@TableLogic` 只数未删行、删除后名字允许重用"的现行语义，并让「创建→删除→重建同名」直接撞库。做法是 STORED 生成列 `CASE WHEN del_flag='0' THEN col END` 再对它建唯一索引——MySQL 不支持部分/过滤索引，而唯一索引允许多个 NULL，约束于是恰好只作用于未删行。先例 `V11__unique_constraints.sql`。生成列业务侧一律不读写：DO 不映射、INSERT 必须带显式列清单，否则报 `ERROR 3105`。复合唯一用并列生成列，不拼分隔符（`1-2x` 与 `2-x` 会歧义相撞）。
 
-撞上唯一键不得返回 500：`framework/db/DuplicateKeyExceptionHandler` 按 MySQL 报文里的索引名映射回预校验同款业务错误码，**新增唯一索引要在那里登记**，未登记的退化为通用码 `1002099000`。
+撞上唯一键不得返回 500：`framework/db/DuplicateKeyExceptionHandler` 按 MySQL 报文里的索引名映射回预校验同款业务错误码，**新增唯一索引要在那里登记**，未登记的退化为通用码 `1002099000`。登记与迁移脚本的配对**不必靠人记**：同包下的 `UniqueIndexRegistrationTest` 扫 `db/migration/V*.sql` 抽唯一索引名，与映射表键集双向比对，漏登记和登记项陈旧都会红（它先断言两边非空，防"抽取正则失效 → 空集等于空集"的假通过）。
 
 ## 逻辑删除语义（两套并存，勿混用）
 
@@ -65,4 +65,4 @@ group by table_name, index_name;
 - 静态方法用 `try (MockedStatic<T> m = mockStatic(X.class))`（mockito 5.x inline maker 默认可用，无需 mockito-inline）；涉及 `ProceedingJoinPoint.proceed()` 的测试方法签名须 `throws Throwable`。
 - 跑测试的命令与步骤先后见「交付流程与完成定义」；基线用例数实跑为准，不引用历史数字。
 
-> 最近核对：`bccd37a` / 2026-11-26
+> 最近核对：`fac55f6` / 2026-11-26
